@@ -1,0 +1,583 @@
+import { useState, useEffect } from 'react';
+import { Plus, Trash2, Edit, Package, Tag, ShoppingBag, X, Check } from 'lucide-react';
+import {
+  getProducts, createProduct, deleteProduct, updateProduct,
+  getCategories, createCategory, deleteCategory,
+  getAllOrders, updateOrderStatus
+} from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+
+const statusColors = {
+  pendiente: { bg: 'rgba(201,168,76,0.1)', color: 'var(--gold)' },
+  pagado: { bg: 'rgba(46,213,115,0.1)', color: '#2ed573' },
+  enviado: { bg: 'rgba(30,144,255,0.1)', color: '#1e90ff' },
+  entregado: { bg: 'rgba(46,213,115,0.15)', color: '#2ed573' },
+  cancelado: { bg: 'rgba(231,76,60,0.1)', color: '#e74c3c' },
+};
+
+const AdminPage = () => {
+  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('products');
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [productForm, setProductForm] = useState({
+    name: '', description: '', price: '', stock: '', category_id: '', image_url: ''
+  });
+  const [categoryForm, setCategoryForm] = useState({ name: '', description: '' });
+
+  useEffect(() => {
+    if (!user || !isAdmin()) {
+      navigate('/');
+      return;
+    }
+    fetchAll();
+  }, [user]);
+
+  const fetchAll = async () => {
+    try {
+      const [prodRes, catRes, ordRes] = await Promise.all([
+        getProducts(), getCategories(), getAllOrders()
+      ]);
+      setProducts(prodRes.data.products);
+      setCategories(catRes.data.categories);
+      setOrders(ordRes.data.orders);
+    } catch (err) {
+      toast.error('Error al cargar datos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Productos
+  const handleOpenModal = (product = null) => {
+    if (product) {
+      setEditingProduct(product);
+      setProductForm({
+        name: product.name,
+        description: product.description || '',
+        price: product.price,
+        stock: product.stock,
+        category_id: product.category_id || '',
+        image_url: product.image_url || '',
+      });
+    } else {
+      setEditingProduct(null);
+      setProductForm({ name: '', description: '', price: '', stock: '', category_id: '', image_url: '' });
+    }
+    setShowModal(true);
+  };
+
+  const handleSaveProduct = async () => {
+    if (!productForm.name || !productForm.price)
+      return toast.error('Nombre y precio son obligatorios');
+    try {
+      if (editingProduct) {
+        await updateProduct(editingProduct.id, productForm);
+        toast.success('Producto actualizado');
+      } else {
+        await createProduct(productForm);
+        toast.success('Producto creado');
+      }
+      setShowModal(false);
+      fetchAll();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Error al guardar');
+    }
+  };
+
+  const handleDeleteProduct = async (id) => {
+    if (!confirm('¿Eliminar este producto?')) return;
+    try {
+      await deleteProduct(id);
+      toast.success('Producto eliminado');
+      fetchAll();
+    } catch (err) {
+      toast.error('Error al eliminar');
+    }
+  };
+
+  // Categorías
+  const handleCreateCategory = async () => {
+    if (!categoryForm.name) return toast.error('El nombre es obligatorio');
+    try {
+      await createCategory(categoryForm);
+      toast.success('Categoría creada');
+      setCategoryForm({ name: '', description: '' });
+      fetchAll();
+    } catch (err) {
+      toast.error('Error al crear categoría');
+    }
+  };
+
+  const handleDeleteCategory = async (id) => {
+    if (!confirm('¿Eliminar esta categoría?')) return;
+    try {
+      await deleteCategory(id);
+      toast.success('Categoría eliminada');
+      fetchAll();
+    } catch (err) {
+      toast.error('Error al eliminar');
+    }
+  };
+
+  // Órdenes
+  const handleStatusChange = async (orderId, status) => {
+    try {
+      await updateOrderStatus(orderId, status);
+      toast.success('Estado actualizado');
+      fetchAll();
+    } catch (err) {
+      toast.error('Error al actualizar estado');
+    }
+  };
+
+  const inputStyle = {
+    width: '100%', padding: '10px 14px',
+    background: 'var(--bg-primary)',
+    border: '1px solid var(--border)',
+    color: 'var(--text-primary)',
+    fontSize: '13px', outline: 'none',
+  };
+
+  const tabs = [
+    { id: 'products', label: 'Productos', icon: <Package size={16} /> },
+    { id: 'categories', label: 'Categorías', icon: <Tag size={16} /> },
+    { id: 'orders', label: 'Órdenes', icon: <ShoppingBag size={16} /> },
+  ];
+
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <p style={{ color: 'var(--text-muted)', letterSpacing: '3px' }}>CARGANDO...</p>
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight: '100vh', padding: '60px 0' }}>
+      <div className="container">
+
+        {/* Header */}
+        <div style={{ marginBottom: '48px' }}>
+          <p className="section-subtitle">Panel de</p>
+          <h1 className="section-title">Administración</h1>
+          <div className="divider-gold" />
+        </div>
+
+        {/* Stats */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '16px', marginBottom: '48px',
+        }}>
+          {[
+            { label: 'Productos', value: products.length, icon: <Package size={20} /> },
+            { label: 'Categorías', value: categories.length, icon: <Tag size={20} /> },
+            { label: 'Órdenes', value: orders.length, icon: <ShoppingBag size={20} /> },
+            {
+              label: 'Ingresos',
+              value: `$${orders.reduce((s, o) => s + Number(o.total), 0).toFixed(2)}`,
+              icon: <span style={{ fontSize: '18px' }}>💰</span>
+            },
+          ].map(({ label, value, icon }) => (
+            <div key={label} style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              padding: '24px',
+              display: 'flex', alignItems: 'center', gap: '16px',
+            }}>
+              <div style={{ color: 'var(--gold)' }}>{icon}</div>
+              <div>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: '28px', color: 'var(--gold)' }}>
+                  {value}
+                </p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '11px', letterSpacing: '1px' }}>{label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tabs */}
+        <div style={{
+          display: 'flex', gap: '0',
+          borderBottom: '1px solid var(--border)',
+          marginBottom: '40px',
+        }}>
+          {tabs.map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '14px 28px', background: 'none',
+                border: 'none', borderBottom: '2px solid',
+                borderBottomColor: activeTab === tab.id ? 'var(--gold)' : 'transparent',
+                color: activeTab === tab.id ? 'var(--gold)' : 'var(--text-muted)',
+                fontSize: '12px', letterSpacing: '1px',
+                cursor: 'pointer', transition: 'all 0.3s',
+                marginBottom: '-1px',
+              }}>
+              {tab.icon} {tab.label.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
+        {/* TAB: Productos */}
+        {activeTab === 'products' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
+              <button className="btn-gold" onClick={() => handleOpenModal()}>
+                <Plus size={14} style={{ marginRight: '8px' }} />
+                Nuevo Producto
+              </button>
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    {['ID', 'Nombre', 'Precio', 'Stock', 'Categoría', 'Acciones'].map(h => (
+                      <th key={h} style={{
+                        padding: '12px 16px', textAlign: 'left',
+                        fontSize: '10px', letterSpacing: '2px',
+                        color: 'var(--text-muted)', fontWeight: '600',
+                      }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map(product => (
+                    <tr key={product.id} style={{
+                      borderBottom: '1px solid var(--border)',
+                      transition: 'background 0.2s',
+                    }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '12px' }}>#{product.id}</td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {product.image_url && (
+                            <img src={product.image_url} alt={product.name}
+                              style={{ width: '36px', height: '36px', objectFit: 'cover', border: '1px solid var(--border)' }} />
+                          )}
+                          <span style={{ fontSize: '13px' }}>{product.name}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 16px', color: 'var(--gold)', fontFamily: 'var(--font-display)', fontSize: '16px' }}>
+                        ${Number(product.price).toFixed(2)}
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: '13px' }}>
+                        <span style={{
+                          color: product.stock <= 5 ? '#e74c3c' : 'var(--text-primary)',
+                        }}>{product.stock}</span>
+                      </td>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-secondary)', fontSize: '12px' }}>
+                        {product.category_name || '—'}
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button onClick={() => handleOpenModal(product)}
+                            style={{
+                              background: 'none', border: '1px solid var(--border)',
+                              color: 'var(--text-secondary)', padding: '6px 10px',
+                              cursor: 'pointer', transition: 'all 0.3s',
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.borderColor = 'var(--gold)';
+                              e.currentTarget.style.color = 'var(--gold)';
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.borderColor = 'var(--border)';
+                              e.currentTarget.style.color = 'var(--text-secondary)';
+                            }}>
+                            <Edit size={13} />
+                          </button>
+                          <button onClick={() => handleDeleteProduct(product.id)}
+                            style={{
+                              background: 'none', border: '1px solid var(--border)',
+                              color: 'var(--text-secondary)', padding: '6px 10px',
+                              cursor: 'pointer', transition: 'all 0.3s',
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.borderColor = '#e74c3c';
+                              e.currentTarget.style.color = '#e74c3c';
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.borderColor = 'var(--border)';
+                              e.currentTarget.style.color = 'var(--text-secondary)';
+                            }}>
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB: Categorías */}
+        {activeTab === 'categories' && (
+          <div>
+            {/* Formulario */}
+            <div style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              padding: '28px', marginBottom: '32px',
+            }}>
+              <h3 style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '20px', fontWeight: '400', marginBottom: '20px',
+              }}>Nueva Categoría</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr auto', gap: '12px', alignItems: 'end' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '10px', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    NOMBRE
+                  </label>
+                  <input
+                    type="text" placeholder="Ej: Deportes"
+                    value={categoryForm.name}
+                    onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '10px', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    DESCRIPCIÓN
+                  </label>
+                  <input
+                    type="text" placeholder="Descripción de la categoría"
+                    value={categoryForm.description}
+                    onChange={e => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                    style={inputStyle}
+                  />
+                </div>
+                <button className="btn-gold" onClick={handleCreateCategory} style={{ padding: '10px 24px' }}>
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Lista */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {categories.map(cat => (
+                <div key={cat.id} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '16px 20px',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <Tag size={16} color="var(--gold)" />
+                    <div>
+                      <p style={{ fontSize: '13px', fontWeight: '500' }}>{cat.name}</p>
+                      <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{cat.description}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => handleDeleteCategory(cat.id)}
+                    style={{
+                      background: 'none', border: '1px solid var(--border)',
+                      color: 'var(--text-muted)', padding: '6px 10px',
+                      cursor: 'pointer', transition: 'all 0.3s',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.borderColor = '#e74c3c';
+                      e.currentTarget.style.color = '#e74c3c';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.borderColor = 'var(--border)';
+                      e.currentTarget.style.color = 'var(--text-muted)';
+                    }}>
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB: Órdenes */}
+        {activeTab === 'orders' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {orders.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '60px' }}>
+                No hay órdenes aún
+              </p>
+            ) : orders.map(order => {
+              const status = statusColors[order.status] || statusColors.pendiente;
+              const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+              return (
+                <div key={order.id} style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  padding: '24px',
+                }}>
+                  <div style={{
+                    display: 'flex', justifyContent: 'space-between',
+                    alignItems: 'center', flexWrap: 'wrap', gap: '12px',
+                    marginBottom: '16px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '600' }}>Orden #{order.id}</span>
+                      <span style={{
+                        padding: '3px 10px', fontSize: '10px', fontWeight: '600',
+                        background: status.bg, color: status.color,
+                      }}>{order.status?.toUpperCase()}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+                        {order.customer_name} · {order.email}
+                      </span>
+                      <span style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '20px', color: 'var(--gold)',
+                      }}>${Number(order.total).toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  {/* Items */}
+                  <div style={{
+                    borderTop: '1px solid var(--border)',
+                    paddingTop: '12px', marginBottom: '16px',
+                  }}>
+                    {items?.map((item, i) => (
+                      <span key={i} style={{
+                        display: 'inline-block',
+                        background: 'var(--bg-hover)',
+                        border: '1px solid var(--border)',
+                        padding: '4px 10px', fontSize: '11px',
+                        color: 'var(--text-secondary)', marginRight: '8px', marginBottom: '6px',
+                      }}>
+                        {item.product_name} ×{item.quantity}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Cambiar estado */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '11px', letterSpacing: '1px' }}>
+                      ESTADO:
+                    </span>
+                    {['pendiente', 'pagado', 'enviado', 'entregado', 'cancelado'].map(s => (
+                      <button key={s} onClick={() => handleStatusChange(order.id, s)}
+                        style={{
+                          padding: '5px 12px', fontSize: '10px', letterSpacing: '1px',
+                          border: '1px solid',
+                          borderColor: order.status === s ? statusColors[s]?.color : 'var(--border)',
+                          background: order.status === s ? statusColors[s]?.bg : 'transparent',
+                          color: order.status === s ? statusColors[s]?.color : 'var(--text-muted)',
+                          cursor: 'pointer', transition: 'all 0.3s',
+                          display: 'flex', alignItems: 'center', gap: '4px',
+                        }}>
+                        {order.status === s && <Check size={10} />}
+                        {s.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* MODAL Producto */}
+      {showModal && (
+        <>
+          <div onClick={() => setShowModal(false)} style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.8)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 2000,
+          }} />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '100%', maxWidth: '540px',
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-gold)',
+            padding: '40px', zIndex: 2001,
+            maxHeight: '90vh', overflowY: 'auto',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: '400' }}>
+                {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
+              </h3>
+              <button onClick={() => setShowModal(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {[
+                { key: 'name', label: 'Nombre', type: 'text', placeholder: 'Nombre del producto' },
+                { key: 'price', label: 'Precio', type: 'number', placeholder: '0.00' },
+                { key: 'stock', label: 'Stock', type: 'number', placeholder: '0' },
+                { key: 'image_url', label: 'URL de imagen', type: 'text', placeholder: 'https://...' },
+              ].map(({ key, label, type, placeholder }) => (
+                <div key={key}>
+                  <label style={{ display: 'block', fontSize: '10px', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    {label.toUpperCase()}
+                  </label>
+                  <input
+                    type={type} placeholder={placeholder}
+                    value={productForm[key]}
+                    onChange={e => setProductForm({ ...productForm, [key]: e.target.value })}
+                    style={inputStyle}
+                    onFocus={e => e.target.style.borderColor = 'var(--border-gold)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                  />
+                </div>
+              ))}
+
+              {/* Categoría */}
+              <div>
+                <label style={{ display: 'block', fontSize: '10px', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                  CATEGORÍA
+                </label>
+                <select
+                  value={productForm.category_id}
+                  onChange={e => setProductForm({ ...productForm, category_id: e.target.value })}
+                  style={{ ...inputStyle, cursor: 'pointer' }}>
+                  <option value="">Sin categoría</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Descripción */}
+              <div>
+                <label style={{ display: 'block', fontSize: '10px', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                  DESCRIPCIÓN
+                </label>
+                <textarea
+                  placeholder="Descripción del producto"
+                  value={productForm.description}
+                  onChange={e => setProductForm({ ...productForm, description: e.target.value })}
+                  rows={3}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                  onFocus={e => e.target.style.borderColor = 'var(--border-gold)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                />
+              </div>
+
+              <button className="btn-gold" style={{ width: '100%', padding: '14px', marginTop: '8px' }}
+                onClick={handleSaveProduct}>
+                {editingProduct ? 'Guardar Cambios' : 'Crear Producto'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default AdminPage;

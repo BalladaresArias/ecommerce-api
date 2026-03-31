@@ -24,15 +24,16 @@ const getOne = async (req, res) => {
 const create = async (req, res) => {
   try {
     const { name, description, price, stock, category_id, image_url } = req.body;
+    console.log('Crear producto:', { name, price, stock, category_id });
 
     if (!name || !price)
       return res.status(400).json({ error: 'Nombre y precio son obligatorios' });
 
     const id = await productModel.create(name, description, price, stock, category_id, image_url);
     const product = await productModel.getById(id);
-
     res.status(201).json({ message: 'Producto creado exitosamente', product });
   } catch (err) {
+    console.error('ERROR createProduct:', err.message, err.code);
     res.status(500).json({ error: 'Error al crear producto', detail: err.message });
   }
 };
