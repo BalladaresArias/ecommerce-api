@@ -17,15 +17,9 @@ const PaymentPage = () => {
   const orderId = location.state?.order_id;
   const total = location.state?.total;
 
-  useEffect(() => {
-    if (!orderId) navigate('/');
-    // Cargar script de Wompi
-    const script = document.createElement('script');
-    script.src = 'https://js.wompi.co/v1/';
-    script.async = true;
-    document.body.appendChild(script);
-    return () => document.body.removeChild(script);
-  }, []);
+    useEffect(() => {
+        if (!orderId) navigate('/');
+    }, []);
 
   const formatCardNumber = (value) => {
     return value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim().slice(0, 19);
@@ -37,54 +31,71 @@ const PaymentPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!window.Wompi) return toast.error('Error al cargar Wompi');
-
     setLoading(true);
     try {
-      const cardNumber = cardData.number.replace(/\s/g, '');
-      const [expMonth, expYear] = cardData.expiry.split('/');
+        const cardNumber = cardData.number.replace(/\s/g, '');
+        const [expMonth, expYear] = cardData.expiry.split('/');
 
-      // Tokenizar tarjeta con Wompi
-      const tokenRes = await fetch('https://sandbox.wompi.co/v1/tokens/cards', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_WOMPI_PUBLIC_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          number: cardNumber,
-          cvc: cardData.cvv,
-          exp_month: expMonth,
-          exp_year: `20${expYear}`,
-          card_holder: cardData.name,
-        }),
-      });
+        // Log para debug
+        console.log('Enviando a Wompi:', {
+        number: cardNumber,
+        cvc: cardData.cvv,
+        exp_month: expMonth,
+        exp_year: `20${expYear}`,
+        card_holder: cardData.name,
+        llave: import.meta.env.VITE_WOMPI_PUBLIC_KEY,
+        });
 
-      const tokenData = await tokenRes.json();
+        const tokenRes = await fetch('https://sandbox.wompi.co/v1/tokens/cards', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${import.meta.env.VITE_WOMPI_PUBLIC_KEY}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                number: cardNumber,
+                cvc: cardData.cvv,
+                exp_month: expMonth,
+                exp_year: expYear,  // ← solo 2 dígitos
+                card_holder: cardData.name,
+            }),
+        });
 
-      if (!tokenData.data?.id)
-        throw new Error(tokenData.error?.reason || 'Error al tokenizar tarjeta');
+        const tokenData = await tokenRes.json();
+        console.log('Token response completo:', JSON.stringify(tokenData, null, 2));
 
-      // Procesar pago en tu backend
-      const res = await createTransaction({
+        if (!tokenData.data?.id) {
+        const reason = tokenData.error?.reason ||
+            tokenData.error?.messages?.number?.[0] ||
+            tokenData.error?.messages?.exp_month?.[0] ||
+            tokenData.error?.messages?.exp_year?.[0] ||
+            tokenData.error?.messages?.cvc?.[0] ||
+            'Error al tokenizar tarjeta';
+        throw new Error(reason);
+        }
+
+        const res = await createTransaction({
         order_id: orderId,
         token: tokenData.data.id,
         card_holder: cardData.name,
         installments: parseInt(cardData.installments),
-      });
+        });
 
-      if (res.data.status === 'APPROVED') {
-        toast.success('¡Pago aprobado!');
+        console.log('Payment response:', res.data);
+
+        if (res.data.status === 'APPROVED') {
+        toast.success('¡Pago aprobado! 🎉');
         navigate('/orders');
-      } else {
-        toast.error('Pago declinado, intenta de nuevo');
-      }
+        } else {
+        toast.error(`Pago ${res.data.status} — intenta de nuevo`);
+        }
     } catch (err) {
-      toast.error(err.response?.data?.error || err.message || 'Error al procesar pago');
+        console.error('Payment error completo:', err);
+        toast.error(err.message || 'Error al procesar pago');
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+    };
 
   const inputStyle = {
     width: '100%', padding: '14px 16px',

@@ -140,6 +140,7 @@ const LoginPage = () => {
         }}>
           <p style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center' }}>
             Admin demo: <span style={{ color: 'var(--gold)' }}>admin@ecommerce.com</span> / <span style={{ color: 'var(--gold)' }}>password</span>
+            Cliente demo: <span style={{ color: 'var(--gold)' }}>prueba@gmail.com</span> / <span style={{ color: 'var(--gold)' }}>13142131u</span>
           </p>
         </div>
       </div>

@@ -4,15 +4,6 @@ require('dotenv').config();
 
 const WOMPI_API = 'https://sandbox.wompi.co/v1';
 
-// Obtener token de aceptación de Wompi
-const getAcceptanceToken = async () => {
-  const res = await axios.get(
-    `${WOMPI_API}/merchants/${process.env.WOMPI_PUBLIC_KEY}`
-  );
-  return res.data.data.presigned_acceptance.acceptance_token;
-};
-
-// Crear transacción en Wompi
 const createTransaction = async (req, res) => {
   try {
     const { order_id, token, card_holder, installments = 1 } = req.body;
@@ -20,7 +11,6 @@ const createTransaction = async (req, res) => {
     if (!order_id || !token)
       return res.status(400).json({ error: 'order_id y token son requeridos' });
 
-    // Obtener la orden
     const [orders] = await pool.query(
       'SELECT * FROM orders WHERE id = ? AND user_id = ?',
       [order_id, req.user.id]
@@ -31,15 +21,30 @@ const createTransaction = async (req, res) => {
 
     const order = orders[0];
 
-    if (order.status !== 'pendiente')
-      return res.status(400).json({ error: 'Esta orden ya fue procesada' });
+    // Obtener merchant info y acceptance_token
+    const merchantRes = await axios.get(
+      `${WOMPI_API}/merchants/${process.env.WOMPI_PUBLIC_KEY}`
+    );
+    const acceptanceToken = merchantRes.data.data.presigned_acceptance.acceptance_token;
+    console.log('Acceptance token obtenido:', acceptanceToken ? 'OK' : 'FALLO');
 
-    const acceptanceToken = await getAcceptanceToken();
-    const amountInCents = Math.round(Number(order.total) * 100);
+    const totalNumber = Number(order.total);
+    const amountInCents = totalNumber < 1000 
+        ? Math.round(totalNumber * 4000 * 100)  // USD a COP (1 USD ≈ 4000 COP)
+        : Math.round(totalNumber * 100);         // Ya está en COP
+
+        console.log('Monto calculado:', { total: totalNumber, amountInCents });
     const reference = `shopflow-${order_id}-${Date.now()}`;
 
-    // Crear transacción en Wompi
-    const transaction = await axios.post(
+    console.log('Creando transacción:', {
+      amount_in_cents: amountInCents,
+      currency: 'COP',
+      reference,
+      token,
+      installments,
+    });
+
+    const transactionRes = await axios.post(
       `${WOMPI_API}/transactions`,
       {
         amount_in_cents: amountInCents,
@@ -47,7 +52,7 @@ const createTransaction = async (req, res) => {
         customer_email: req.user.email,
         payment_method: {
           type: 'CARD',
-          installments,
+          installments: Number(installments),
           token,
         },
         reference,
@@ -60,16 +65,13 @@ const createTransaction = async (req, res) => {
       }
     );
 
-    const tx = transaction.data.data;
+    const tx = transactionRes.data.data;
+    console.log('Transacción creada:', tx.id, tx.status);
 
-    // Guardar referencia en la orden
+    const newStatus = tx.status === 'APPROVED' ? 'pagado' : 'pendiente';
     await pool.query(
       'UPDATE orders SET status = ?, payment_reference = ? WHERE id = ?',
-      [
-        tx.status === 'APPROVED' ? 'pagado' : 'pendiente',
-        reference,
-        order_id,
-      ]
+      [newStatus, reference, order_id]
     );
 
     res.json({
@@ -80,37 +82,27 @@ const createTransaction = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('ERROR payment:', err.response?.data || err.message);
+    const detail = err.response?.data || err.message;
+    console.error('ERROR payment completo:', JSON.stringify(detail, null, 2));
     res.status(500).json({
       error: 'Error al procesar pago',
-      detail: err.response?.data?.error || err.message,
+      detail,
     });
   }
 };
 
-// Webhook de Wompi — notificaciones automáticas
 const webhook = async (req, res) => {
   try {
     const { event, data } = req.body;
-
     if (event === 'transaction.updated') {
       const tx = data.transaction;
-      const reference = tx.reference;
-      const orderId = reference.split('-')[1];
-
+      const orderId = tx.reference.split('-')[1];
       let newStatus = 'pendiente';
       if (tx.status === 'APPROVED') newStatus = 'pagado';
-      if (tx.status === 'DECLINED') newStatus = 'cancelado';
-      if (tx.status === 'VOIDED') newStatus = 'cancelado';
-
-      await pool.query(
-        'UPDATE orders SET status = ? WHERE id = ?',
-        [newStatus, orderId]
-      );
-
-      console.log(`Orden ${orderId} actualizada a ${newStatus}`);
+      if (tx.status === 'DECLINED' || tx.status === 'VOIDED') newStatus = 'cancelado';
+      await pool.query('UPDATE orders SET status = ? WHERE id = ?', [newStatus, orderId]);
+      console.log(`Webhook: Orden ${orderId} → ${newStatus}`);
     }
-
     res.json({ received: true });
   } catch (err) {
     console.error('Webhook error:', err.message);
