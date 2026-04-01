@@ -1,4 +1,5 @@
 const axios = require('axios');
+const crypto = require('crypto');
 const pool = require('../config/db');
 require('dotenv').config();
 
@@ -21,34 +22,30 @@ const createTransaction = async (req, res) => {
 
     const order = orders[0];
 
-    // Obtener merchant info y acceptance_token
+    // Obtener acceptance_token
     const merchantRes = await axios.get(
       `${WOMPI_API}/merchants/${process.env.WOMPI_PUBLIC_KEY}`
     );
     const acceptanceToken = merchantRes.data.data.presigned_acceptance.acceptance_token;
-    console.log('Acceptance token obtenido:', acceptanceToken ? 'OK' : 'FALLO');
 
-    const totalNumber = Number(order.total);
-    const amountInCents = totalNumber < 1000 
-        ? Math.round(totalNumber * 4000 * 100)  // USD a COP (1 USD ≈ 4000 COP)
-        : Math.round(totalNumber * 100);         // Ya está en COP
-
-        console.log('Monto calculado:', { total: totalNumber, amountInCents });
+    const amountInCents = Math.round(Number(order.total) * 4000 * 100);
+    const currency = 'COP';
     const reference = `shopflow-${order_id}-${Date.now()}`;
 
-    console.log('Creando transacción:', {
-      amount_in_cents: amountInCents,
-      currency: 'COP',
-      reference,
-      token,
-      installments,
-    });
+    // Generar firma de integridad
+    const integrityString = `${reference}${amountInCents}${currency}${process.env.WOMPI_INTEGRITY_KEY}`;
+    const signature = crypto
+      .createHash('sha256')
+      .update(integrityString)
+      .digest('hex');
+
+    console.log('Transacción:', { amountInCents, currency, reference, signature: signature.slice(0, 10) + '...' });
 
     const transactionRes = await axios.post(
       `${WOMPI_API}/transactions`,
       {
         amount_in_cents: amountInCents,
-        currency: 'COP',
+        currency,
         customer_email: req.user.email,
         payment_method: {
           type: 'CARD',
@@ -57,6 +54,7 @@ const createTransaction = async (req, res) => {
         },
         reference,
         acceptance_token: acceptanceToken,
+        signature,
       },
       {
         headers: {
@@ -84,10 +82,7 @@ const createTransaction = async (req, res) => {
   } catch (err) {
     const detail = err.response?.data || err.message;
     console.error('ERROR payment completo:', JSON.stringify(detail, null, 2));
-    res.status(500).json({
-      error: 'Error al procesar pago',
-      detail,
-    });
+    res.status(500).json({ error: 'Error al procesar pago', detail });
   }
 };
 
@@ -101,11 +96,9 @@ const webhook = async (req, res) => {
       if (tx.status === 'APPROVED') newStatus = 'pagado';
       if (tx.status === 'DECLINED' || tx.status === 'VOIDED') newStatus = 'cancelado';
       await pool.query('UPDATE orders SET status = ? WHERE id = ?', [newStatus, orderId]);
-      console.log(`Webhook: Orden ${orderId} → ${newStatus}`);
     }
     res.json({ received: true });
   } catch (err) {
-    console.error('Webhook error:', err.message);
     res.status(500).json({ error: err.message });
   }
 };
