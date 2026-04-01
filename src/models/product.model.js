@@ -21,17 +21,19 @@ const getById = async (id) => {
 };
 
 const create = async (name, description, price, stock, category_id, image_url) => {
+  const catId = category_id && category_id !== '' ? category_id : null;
   const [result] = await pool.query(
     'INSERT INTO products (name, description, price, stock, category_id, image_url) VALUES (?, ?, ?, ?, ?, ?)',
-    [name, description, price, stock, category_id, image_url]
+    [name, description, price, stock, catId, image_url]
   );
   return result.insertId;
 };
 
 const update = async (id, name, description, price, stock, category_id, image_url) => {
+  const catId = category_id && category_id !== '' ? category_id : null;
   const [result] = await pool.query(
     'UPDATE products SET name=?, description=?, price=?, stock=?, category_id=?, image_url=? WHERE id=?',
-    [name, description, price, stock, category_id, image_url, id]
+    [name, description, price, stock, catId, image_url, id]
   );
   return result.affectedRows;
 };
