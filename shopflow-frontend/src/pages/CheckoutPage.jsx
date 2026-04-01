@@ -22,9 +22,15 @@ const CheckoutPage = () => {
         product_id: item.id,
         quantity: item.quantity,
       }));
-      await createOrder({ items });
+      const res = await createOrder({ items });
       clearCart();
-      setSuccess(true);
+      // Redirigir a pagos con el order_id
+      navigate('/payment', {
+        state: {
+          order_id: res.data.order_id,
+          total: res.data.total,
+        }
+      });
     } catch (err) {
       toast.error(err.response?.data?.error || 'Error al procesar la orden');
     } finally {

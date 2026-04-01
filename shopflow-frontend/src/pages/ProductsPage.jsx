@@ -3,8 +3,10 @@ import { Search, Filter, ShoppingBag } from 'lucide-react';
 import { getProducts, getCategories } from '../services/api';
 import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const ProductsPage = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -141,8 +143,9 @@ const ProductsPage = () => {
             gap: '24px',
           }}>
             {filtered.map((product, i) => (
-              <div key={product.id} className="card" style={{
+              <div key={product.id} className="card" onClick={() => navigate(`/products/${product.id}`)} style={{
                 overflow: 'hidden',
+                cursor: 'pointer',
                 animation: 'fadeInUp 0.5s ease forwards',
                 animationDelay: `${i * 0.05}s`,
                 opacity: 0,

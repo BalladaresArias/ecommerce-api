@@ -46,3 +46,6 @@ export const createOrder = (data) => api.post('/orders', data);
 export const getMyOrders = () => api.get('/orders/my-orders');
 export const getAllOrders = () => api.get('/orders');
 export const updateOrderStatus = (id, status) => api.put(`/orders/${id}/status`, { status });
+
+// Payments
+export const createTransaction = (data) => api.post('/payments/transaction', data);

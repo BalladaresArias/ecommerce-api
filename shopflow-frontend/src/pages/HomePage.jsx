@@ -257,10 +257,11 @@ const HomePage = () => {
               gap: '24px',
             }}>
               {products.map(product => (
-                <div key={product.id} className="card" style={{ overflow: 'hidden' }}>
+                <div key={product.id} className="card" onClick={() => navigate(`/products/${product.id}`)} style={{ overflow: 'hidden' }}>
                   {/* Imagen */}
                   <div style={{
                     height: '220px', background: 'var(--bg-primary)',
+                    cursor: 'pointer',
                     overflow: 'hidden', position: 'relative',
                   }}>
                     {product.image_url ? (
