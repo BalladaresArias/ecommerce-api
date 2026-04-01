@@ -40,15 +40,28 @@ const AdminPage = () => {
     fetchAll();
   }, [user]);
 
+  useEffect(() => {
+    console.log('Categorías cargadas:', categories);
+  }, [categories]);
+
   const fetchAll = async () => {
     try {
-      const [prodRes, catRes, ordRes] = await Promise.all([
-        getProducts(), getCategories(), getAllOrders()
+      const [prodRes, catRes] = await Promise.all([
+        getProducts(), getCategories()
       ]);
       setProducts(prodRes.data.products);
       setCategories(catRes.data.categories);
-      setOrders(ordRes.data.orders);
+
+      // Orders por separado para que no rompa todo
+      try {
+        const ordRes = await getAllOrders();
+        setOrders(ordRes.data.orders);
+      } catch (ordErr) {
+        console.error('Error orders:', ordErr.message);
+        setOrders([]);
+      }
     } catch (err) {
+      console.error('fetchAll error:', err);
       toast.error('Error al cargar datos');
     } finally {
       setLoading(false);
