@@ -66,7 +66,10 @@ const createTransaction = async (req, res) => {
     const tx = transactionRes.data.data;
     console.log('Transacción creada:', tx.id, tx.status);
 
-    const newStatus = tx.status === 'APPROVED' ? 'pagado' : 'pendiente';
+    let newStatus = 'pendiente';
+    if (tx.status === 'APPROVED') newStatus = 'pagado';
+    if (tx.status === 'PENDING') newStatus = 'pendiente';
+    if (tx.status === 'DECLINED') newStatus = 'cancelado';
     await pool.query(
       'UPDATE orders SET status = ?, payment_reference = ? WHERE id = ?',
       [newStatus, reference, order_id]

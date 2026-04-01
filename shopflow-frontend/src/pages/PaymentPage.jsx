@@ -83,11 +83,18 @@ const PaymentPage = () => {
 
         console.log('Payment response:', res.data);
 
-        if (res.data.status === 'APPROVED') {
-        toast.success('¡Pago aprobado! 🎉');
-        navigate('/orders');
+        const status = res.data.status;
+
+        if (status === 'APPROVED') {
+            toast.success('¡Pago aprobado! 🎉');
+            navigate('/orders');
+        } else if (status === 'PENDING') {
+            toast.success('Pago en proceso, te notificaremos pronto ⏳');
+            navigate('/orders');
+        } else if (status === 'DECLINED') {
+            toast.error('Pago declinado por el banco');
         } else {
-        toast.error(`Pago ${res.data.status} — intenta de nuevo`);
+            toast.error(`Estado: ${status} — contacta soporte`);
         }
     } catch (err) {
         console.error('Payment error completo:', err);
