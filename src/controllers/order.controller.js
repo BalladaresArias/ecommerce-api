@@ -1,6 +1,6 @@
 const orderModel = require('../models/order.model');
 const productModel = require('../models/product.model');
-const { sendEmail } = require('../config/mailer');
+const sendEmail = require('../config/mailer');
 const { orderConfirmationEmail, orderStatusEmail, newOrderAdminEmail } = require('../config/emailTemplates');
 const userModel = require('../models/user.model');
 require('dotenv').config();
