@@ -5,21 +5,6 @@ const { orderConfirmationEmail, orderStatusEmail, newOrderAdminEmail } = require
 const userModel = require('../models/user.model');
 require('dotenv').config();
 
-const sendEmail = async (to, template) => {
-  try {
-    await transporter.sendMail({
-      from: `"ShopFlow" <${process.env.EMAIL_USER}>`,
-      to,
-      subject: template.subject,
-      html: template.html,
-    });
-    console.log(`✉️ Email enviado a ${to}`);
-  } catch (err) {
-    console.error('Error enviando email (no crítico):', err.message);
-    // No lanzar error — el flujo sigue aunque falle el email
-  }
-};
-
 const createOrder = async (req, res) => {
   try {
     const { items } = req.body;
@@ -91,7 +76,6 @@ const updateStatus = async (req, res) => {
     if (!affected)
       return res.status(404).json({ error: 'Orden no encontrada' });
 
-    // Obtener orden y usuario para el email
     const [orders] = await require('../config/db').query(
       `SELECT o.*, u.name, u.email 
        FROM orders o 
@@ -103,7 +87,9 @@ const updateStatus = async (req, res) => {
     if (orders.length) {
       const order = orders[0];
       const user = { name: order.name, email: order.email };
-      await sendEmail(user.email, orderStatusEmail(user, { ...order, status }));
+      setImmediate(async () => {
+        await sendEmail(user.email, orderStatusEmail(user, { ...order, status }));
+      });
     }
 
     res.json({ message: 'Estado actualizado', status });
