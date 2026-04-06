@@ -1,6 +1,6 @@
 const orderModel = require('../models/order.model');
 const productModel = require('../models/product.model');
-const transporter = require('../config/mailer');
+const { sendEmail } = require('../config/mailer');
 const { orderConfirmationEmail, orderStatusEmail, newOrderAdminEmail } = require('../config/emailTemplates');
 const userModel = require('../models/user.model');
 require('dotenv').config();
@@ -15,7 +15,8 @@ const sendEmail = async (to, template) => {
     });
     console.log(`✉️ Email enviado a ${to}`);
   } catch (err) {
-    console.error('Error enviando email:', err.message);
+    console.error('Error enviando email (no crítico):', err.message);
+    // No lanzar error — el flujo sigue aunque falle el email
   }
 };
 
@@ -47,11 +48,10 @@ const createOrder = async (req, res) => {
     const order = { id: orderId, total };
     const user = await userModel.findById(req.user.id);
 
-    // Email al cliente
-    await sendEmail(user.email, orderConfirmationEmail(user, order, enrichedItems));
-
-    // Email al admin
-    await sendEmail(process.env.EMAIL_ADMIN, newOrderAdminEmail(order, user, enrichedItems));
+    setImmediate(async () => {
+      await sendEmail(user.email, orderConfirmationEmail(user, order, enrichedItems));
+      await sendEmail(process.env.EMAIL_ADMIN, newOrderAdminEmail(order, user, enrichedItems));
+    });
 
     res.status(201).json({ message: 'Orden creada exitosamente', order_id: orderId, total });
   } catch (err) {

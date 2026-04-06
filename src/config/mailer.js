@@ -1,26 +1,20 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 require('dotenv').config();
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  family: 4, // Forzar IPv4
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-transporter.verify((error) => {
-  if (error) {
-    console.error('Error configurando email:', error.message);
-  } else {
-    console.log('✉️ Email configurado correctamente');
+const sendEmail = async (to, template) => {
+  try {
+    await resend.emails.send({
+      from: 'ShopFlow <onboarding@resend.dev>',
+      to,
+      subject: template.subject,
+      html: template.html,
+    });
+    console.log(`✉️ Email enviado a ${to}`);
+  } catch (err) {
+    console.error('Error enviando email:', err.message);
   }
-});
+};
 
-module.exports = transporter;
+module.exports = { sendEmail };
