@@ -3,6 +3,7 @@ const productModel = require('../models/product.model');
 const sendEmail = require('../config/mailer');
 const { orderConfirmationEmail, orderStatusEmail, newOrderAdminEmail } = require('../config/emailTemplates');
 const userModel = require('../models/user.model');
+const pool = require('../config/db');
 require('dotenv').config();
 
 const createOrder = async (req, res) => {
@@ -66,21 +67,30 @@ const getAllOrders = async (req, res) => {
 
 const updateStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, shipping_company, shipping_tracking, shipping_estimated, shipping_notes } = req.body;
     const validStatuses = ['pendiente', 'pagado', 'enviado', 'entregado', 'cancelado'];
 
     if (!validStatuses.includes(status))
       return res.status(400).json({ error: 'Estado inválido', valid: validStatuses });
 
-    const affected = await orderModel.updateStatus(req.params.id, status);
-    if (!affected)
-      return res.status(404).json({ error: 'Orden no encontrada' });
+    // Si se cambia a enviado, guardar info de flete
+    if (status === 'enviado') {
+      if (!shipping_company || !shipping_tracking)
+        return res.status(400).json({ error: 'Transportadora y número de tracking son obligatorios para enviar' });
 
-    const [orders] = await require('../config/db').query(
-      `SELECT o.*, u.name, u.email 
-       FROM orders o 
-       JOIN users u ON o.user_id = u.id 
-       WHERE o.id = ?`,
+      await pool.query(
+        `UPDATE orders SET status = ?, shipping_company = ?, 
+         shipping_tracking = ?, shipping_estimated = ?, shipping_notes = ?
+         WHERE id = ?`,
+        [status, shipping_company, shipping_tracking, shipping_estimated || null, shipping_notes || null, req.params.id]
+      );
+    } else {
+      await orderModel.updateStatus(req.params.id, status);
+    }
+
+    const [orders] = await pool.query(
+      `SELECT o.*, u.name, u.email FROM orders o
+       JOIN users u ON o.user_id = u.id WHERE o.id = ?`,
       [req.params.id]
     );
 
@@ -88,7 +98,9 @@ const updateStatus = async (req, res) => {
       const order = orders[0];
       const user = { name: order.name, email: order.email };
       setImmediate(async () => {
-        await sendEmail(user.email, orderStatusEmail(user, { ...order, status }));
+        await sendEmail(user.email, orderStatusEmail(user, { ...order, status }, {
+          shipping_company, shipping_tracking, shipping_estimated, shipping_notes
+        }));
       });
     }
 

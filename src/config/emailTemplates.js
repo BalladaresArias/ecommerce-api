@@ -170,4 +170,32 @@ const newOrderAdminEmail = (order, user, items) => ({
   `,
 });
 
-module.exports = { orderConfirmationEmail, orderStatusEmail, newOrderAdminEmail };
+const shippingEmail = (user, order, shipping) => ({
+  subject: `🚚 Tu orden #${order.id} está en camino — ShopFlow`,
+  html: `
+    <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #0a0a0a; color: #f0ead6;">
+      <div style="background: linear-gradient(135deg, #a07830, #c9a84c); padding: 40px; text-align: center;">
+        <h1 style="margin: 0; font-size: 32px; font-weight: 300; letter-spacing: 4px; color: #0a0a0a;">
+          SHOP<strong>FLOW</strong>
+        </h1>
+      </div>
+      <div style="padding: 48px 40px;">
+        <h2 style="color: #1e90ff; font-weight: 300;">🚚 Tu pedido está en camino</h2>
+        <p style="color: #9a9080;">Hola <strong style="color: #f0ead6;">${user.name}</strong>, tu orden ya fue despachada.</p>
+
+        <div style="background: #161616; border: 1px solid #2a2420; padding: 24px; margin: 24px 0;">
+          <p style="font-size: 11px; letter-spacing: 3px; color: #c9a84c; margin: 0 0 16px;">INFO DE ENVÍO</p>
+          <p style="color: #9a9080; margin: 0 0 8px;">Transportadora: <strong style="color: #f0ead6;">${shipping.shipping_company}</strong></p>
+          <p style="color: #9a9080; margin: 0 0 8px;">Tracking: <strong style="color: #c9a84c;">${shipping.shipping_tracking}</strong></p>
+          ${shipping.shipping_estimated ? `<p style="color: #9a9080; margin: 0 0 8px;">Entrega estimada: <strong style="color: #f0ead6;">${new Date(shipping.shipping_estimated).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</strong></p>` : ''}
+          ${shipping.shipping_notes ? `<p style="color: #9a9080; margin: 0;">Notas: <strong style="color: #f0ead6;">${shipping.shipping_notes}</strong></p>` : ''}
+        </div>
+      </div>
+      <div style="background: #111111; border-top: 1px solid #2a2420; padding: 24px 40px; text-align: center;">
+        <p style="color: #5a5248; font-size: 11px; margin: 0;">© 2024 ShopFlow</p>
+      </div>
+    </div>
+  `,
+});
+
+module.exports = { orderConfirmationEmail, orderStatusEmail, newOrderAdminEmail, shippingEmail };
