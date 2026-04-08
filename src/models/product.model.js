@@ -1,13 +1,33 @@
 const pool = require('../config/db');
 
-const getAll = async () => {
+const getAll = async (page = 1, limit = 20, search = '', category_id = null) => {
+  const offset = (page - 1) * limit;
+  let where = 'WHERE 1=1';
+  const params = [];
+
+  if (search) {
+    where += ' AND (p.name LIKE ? OR p.description LIKE ?)';
+    params.push(`%${search}%`, `%${search}%`);
+  }
+  if (category_id) {
+    where += ' AND p.category_id = ?';
+    params.push(category_id);
+  }
+
   const [rows] = await pool.query(`
     SELECT p.*, c.name AS category_name 
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
+    ${where}
     ORDER BY p.created_at DESC
-  `);
-  return rows;
+    LIMIT ? OFFSET ?
+  `, [...params, limit, offset]);
+
+  const [countRows] = await pool.query(`
+    SELECT COUNT(*) as total FROM products p ${where}
+  `, params);
+
+  return { products: rows, total: countRows[0].total, page, limit };
 };
 
 const getById = async (id) => {

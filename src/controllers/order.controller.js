@@ -73,7 +73,24 @@ const updateStatus = async (req, res) => {
     if (!validStatuses.includes(status))
       return res.status(400).json({ error: 'Estado inválido', valid: validStatuses });
 
-    // Si se cambia a enviado, guardar info de flete
+    // Obtener orden actual para saber de qué estado viene
+    const [currentOrders] = await pool.query('SELECT * FROM orders WHERE id = ?', [req.params.id]);
+    if (!currentOrders.length)
+      return res.status(404).json({ error: 'Orden no encontrada' });
+
+    const currentOrder = currentOrders[0];
+
+    // Si se cancela viniendo de pagado/enviado → restaurar stock
+    if (status === 'cancelado' && ['pagado', 'enviado'].includes(currentOrder.status)) {
+      const [items] = await pool.query('SELECT * FROM order_items WHERE order_id = ?', [req.params.id]);
+      for (const item of items) {
+        await pool.query(
+          'UPDATE products SET stock = stock + ? WHERE id = ?',
+          [item.quantity, item.product_id]
+        );
+      }
+    }
+
     if (status === 'enviado') {
       if (!shipping_company || !shipping_tracking)
         return res.status(400).json({ error: 'Transportadora y número de tracking son obligatorios para enviar' });

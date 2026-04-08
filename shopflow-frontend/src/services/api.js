@@ -30,7 +30,8 @@ export const registerUser = (data) => api.post('/auth/register', data);
 export const getProfile = () => api.get('/auth/profile');
 
 // Products
-export const getProducts = () => api.get('/products');
+//export const getProducts = () => api.get('/products');
+export const getProducts = (params = {}) => api.get('/products', { params });
 export const getProduct = (id) => api.get(`/products/${id}`);
 export const createProduct = (data) => api.post('/products', data);
 export const updateProduct = (id, data) => api.put(`/products/${id}`, data);

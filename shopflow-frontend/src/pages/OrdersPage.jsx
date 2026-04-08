@@ -132,6 +132,47 @@ const OrdersPage = () => {
                       }}>${Number(order.total).toFixed(2)}</span>
                     </div>
                   </div>
+                  {/* Tracking de envío */}
+                  {order.status === 'enviado' && order.shipping_tracking && (
+                    <div style={{
+                      marginTop: '16px',
+                      padding: '16px',
+                      background: 'rgba(30,144,255,0.05)',
+                      border: '1px solid rgba(30,144,255,0.2)',
+                    }}>
+                      <p style={{ fontSize: '10px', letterSpacing: '2px', color: '#1e90ff', marginBottom: '10px' }}>
+                        📦 INFORMACIÓN DE ENVÍO
+                      </p>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px' }}>
+                        <div>
+                          <p style={{ color: 'var(--text-muted)', fontSize: '10px', marginBottom: '2px' }}>TRANSPORTADORA</p>
+                          <p style={{ fontSize: '13px', fontWeight: '500' }}>{order.shipping_company}</p>
+                        </div>
+                        <div>
+                          <p style={{ color: 'var(--text-muted)', fontSize: '10px', marginBottom: '2px' }}>NÚMERO DE TRACKING</p>
+                          <p style={{ fontSize: '13px', fontWeight: '600', color: '#1e90ff', fontFamily: 'monospace' }}>
+                            {order.shipping_tracking}
+                          </p>
+                        </div>
+                        {order.shipping_estimated && (
+                          <div>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '10px', marginBottom: '2px' }}>ENTREGA ESTIMADA</p>
+                            <p style={{ fontSize: '13px' }}>
+                              {new Date(order.shipping_estimated).toLocaleDateString('es-CO', {
+                                year: 'numeric', month: 'long', day: 'numeric'
+                              })}
+                            </p>
+                          </div>
+                        )}
+                        {order.shipping_notes && (
+                          <div>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '10px', marginBottom: '2px' }}>NOTAS</p>
+                            <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{order.shipping_notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

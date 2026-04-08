@@ -2,8 +2,19 @@ const productModel = require('../models/product.model');
 
 const getAll = async (req, res) => {
   try {
-    const products = await productModel.getAll();
-    res.json({ total: products.length, products });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const search = req.query.search || '';
+    const category_id = req.query.category_id || null;
+
+    const data = await productModel.getAll(page, limit, search, category_id);
+    res.json({
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
+      pages: Math.ceil(data.total / data.limit),
+      products: data.products
+    });
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener productos', detail: err.message });
   }
