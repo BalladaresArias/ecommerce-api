@@ -33,6 +33,11 @@ const AdminPage = () => {
   });
   const [categoryForm, setCategoryForm] = useState({ name: '', description: '' });
   const [coupons, setCoupons] = useState([]);
+  const [shippingModal, setShippingModal] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState(null);
+  const [shippingForm, setShippingForm] = useState({
+    shipping_company: '', shipping_tracking: '', shipping_estimated: '', shipping_notes: ''
+  });
 
   useEffect(() => {
     if (!user || !isAdmin()) {
@@ -146,9 +151,28 @@ const AdminPage = () => {
 
   // Órdenes
   const handleStatusChange = async (orderId, status) => {
+    if (status === 'enviado') {
+      setPendingOrder(orderId);
+      setShippingForm({ shipping_company: '', shipping_tracking: '', shipping_estimated: '', shipping_notes: '' });
+      setShippingModal(true);
+      return;
+    }
     try {
-      await updateOrderStatus(orderId, status);
+      await updateOrderStatus(orderId, { status });
       toast.success('Estado actualizado');
+      fetchAll();
+    } catch (err) {
+      toast.error('Error al actualizar estado');
+    }
+  };
+
+  const handleConfirmShipping = async () => {
+    if (!shippingForm.shipping_company || !shippingForm.shipping_tracking)
+      return toast.error('Transportadora y tracking son obligatorios');
+    try {
+      await updateOrderStatus(pendingOrder, { status: 'enviado', ...shippingForm });
+      toast.success('Estado actualizado');
+      setShippingModal(false);
       fetchAll();
     } catch (err) {
       toast.error('Error al actualizar estado');
@@ -662,6 +686,25 @@ const AdminPage = () => {
           </div>
         </>
       )}
+      {/* Modal envio */}
+      {shippingModal && (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', padding: '32px', width: '420px' }}>
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: '400', marginBottom: '20px' }}>Info de envío</h3>
+          {['shipping_company', 'shipping_tracking', 'shipping_estimated', 'shipping_notes'].map(field => (
+            <input key={field} placeholder={field.replace('shipping_', '')}
+              value={shippingForm[field]}
+              onChange={e => setShippingForm(p => ({ ...p, [field]: e.target.value }))}
+              style={{ width: '100%', padding: '10px 14px', marginBottom: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-primary)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
+            />
+          ))}
+          <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+            <button onClick={handleConfirmShipping} style={{ flex: 1, padding: '12px', background: '#1e90ff', color: '#fff', border: 'none', cursor: 'pointer', letterSpacing: '1px', fontSize: '12px' }}>CONFIRMAR ENVÍO</button>
+            <button onClick={() => setShippingModal(false)} style={{ flex: 1, padding: '12px', background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '12px' }}>CANCELAR</button>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 };

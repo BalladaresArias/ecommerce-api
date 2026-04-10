@@ -46,7 +46,8 @@ export const deleteCategory = (id) => api.delete(`/categories/${id}`);
 export const createOrder = (data) => api.post('/orders', data);
 export const getMyOrders = () => api.get('/orders/my-orders');
 export const getAllOrders = () => api.get('/orders');
-export const updateOrderStatus = (id, status) => api.put(`/orders/${id}/status`, { status });
+export const updateOrderStatus = (id, data) => api.put(`/orders/${id}/status`, data);
+//export const updateOrderStatus = (id, status) => api.put(`/orders/${id}/status`, { status });
 
 // Payments
 export const createTransaction = (data) => api.post('/payments/transaction', data);
