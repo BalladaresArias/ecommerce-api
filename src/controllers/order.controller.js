@@ -7,8 +7,6 @@ const couponModel = require('../models/coupon.model');
 const pool = require('../config/db');
 require('dotenv').config();
 
-const couponModel = require('../models/coupon.model');
-
 const createOrder = async (req, res) => {
   try {
     const { items, coupon_code } = req.body;
