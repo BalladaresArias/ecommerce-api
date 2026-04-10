@@ -3,12 +3,15 @@ const productModel = require('../models/product.model');
 const sendEmail = require('../config/mailer');
 const { orderConfirmationEmail, orderStatusEmail, newOrderAdminEmail } = require('../config/emailTemplates');
 const userModel = require('../models/user.model');
+const couponModel = require('../models/coupon.model');
 const pool = require('../config/db');
 require('dotenv').config();
 
+const couponModel = require('../models/coupon.model');
+
 const createOrder = async (req, res) => {
   try {
-    const { items } = req.body;
+    const { items, coupon_code } = req.body;
 
     if (!items || items.length === 0)
       return res.status(400).json({ error: 'La orden debe tener al menos un producto' });
@@ -26,12 +29,34 @@ const createOrder = async (req, res) => {
       enrichedItems.push({ ...item, unit_price: product.price, product_name: product.name });
     }
 
-    const orderId = await orderModel.createOrder(req.user.id, total.toFixed(2));
+    // Aplicar cupón si viene
+    let discount = 0;
+    let coupon_id = null;
+
+    if (coupon_code) {
+      const coupon = await couponModel.findByCode(coupon_code);
+      if (coupon && coupon.active) {
+        discount = coupon.type === 'percentage'
+          ? (total * coupon.value / 100)
+          : Number(coupon.value);
+        coupon_id = coupon.id;
+        await couponModel.incrementUse(coupon.id);
+      }
+    }
+
+    const final_total = Math.max(0, total - discount).toFixed(2);
+
+    const [result] = await pool.query(
+      'INSERT INTO orders (user_id, total, coupon_id, discount) VALUES (?, ?, ?, ?)',
+      [req.user.id, final_total, coupon_id, discount.toFixed(2)]
+    );
+    const orderId = result.insertId;
+
     for (const item of enrichedItems) {
       await orderModel.addOrderItem(orderId, item.product_id, item.quantity, item.unit_price);
     }
 
-    const order = { id: orderId, total };
+    const order = { id: orderId, total: final_total, original_total: total.toFixed(2), discount: discount.toFixed(2) };
     const user = await userModel.findById(req.user.id);
 
     setImmediate(async () => {
@@ -39,7 +64,14 @@ const createOrder = async (req, res) => {
       await sendEmail(process.env.EMAIL_ADMIN, newOrderAdminEmail(order, user, enrichedItems));
     });
 
-    res.status(201).json({ message: 'Orden creada exitosamente', order_id: orderId, total });
+    res.status(201).json({
+      message: 'Orden creada exitosamente',
+      order_id: orderId,
+      total: final_total,
+      original_total: total.toFixed(2),
+      discount: discount.toFixed(2),
+      coupon_applied: coupon_id !== null,
+    });
   } catch (err) {
     console.error('ERROR createOrder:', err.message);
     res.status(500).json({ error: 'Error al crear orden', detail: err.message });

@@ -50,3 +50,10 @@ export const updateOrderStatus = (id, status) => api.put(`/orders/${id}/status`,
 
 // Payments
 export const createTransaction = (data) => api.post('/payments/transaction', data);
+
+// Coupons
+export const validateCoupon = (data) => api.post('/coupons/validate', data);
+export const getCoupons = () => api.get('/coupons');
+export const createCoupon = (data) => api.post('/coupons', data);
+export const toggleCoupon = (id, active) => api.patch(`/coupons/${id}/toggle`, { active });
+export const deleteCoupon = (id) => api.delete(`/coupons/${id}`);

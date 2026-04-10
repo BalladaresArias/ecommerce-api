@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { validateCoupon, getCoupons, createCoupon, toggleCoupon, deleteCoupon } from '../services/api';
 
 const statusColors = {
   pendiente: { bg: 'rgba(201,168,76,0.1)', color: 'var(--gold)' },
@@ -31,6 +32,7 @@ const AdminPage = () => {
     name: '', description: '', price: '', stock: '', category_id: '', image_url: ''
   });
   const [categoryForm, setCategoryForm] = useState({ name: '', description: '' });
+  const [coupons, setCoupons] = useState([]);
 
   useEffect(() => {
     if (!user || !isAdmin()) {
@@ -60,6 +62,8 @@ const AdminPage = () => {
         console.error('Error orders:', ordErr.message);
         setOrders([]);
       }
+        const couponRes = await getCoupons();
+        setCoupons(couponRes.data.coupons);
     } catch (err) {
       console.error('fetchAll error:', err);
       toast.error('Error al cargar datos');
@@ -498,7 +502,76 @@ const AdminPage = () => {
           </div>
         )}
       </div>
+      {/* TAB: Cupones */}
+      {activeTab === 'coupons' && (
+        <div>
+          {/* Formulario crear cupón */}
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', padding: '28px', marginBottom: '32px' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: '400', marginBottom: '20px' }}>
+              Nuevo Cupón
+            </h3>
+            <CouponForm onCreated={fetchAll} />
+          </div>
 
+          {/* Lista cupones */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {coupons.map(coupon => (
+              <div key={coupon.id} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '16px 20px', background: 'var(--bg-card)', border: '1px solid var(--border)',
+                flexWrap: 'wrap', gap: '12px',
+                opacity: coupon.active ? 1 : 0.5,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <Tag size={16} color="var(--gold)" />
+                  <div>
+                    <p style={{ fontSize: '14px', fontWeight: '600', letterSpacing: '1px', color: 'var(--gold)' }}>
+                      {coupon.code}
+                    </p>
+                    <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      {coupon.type === 'percentage' ? `${coupon.value}% descuento` : `$${coupon.value} fijo`}
+                      {coupon.min_order > 0 && ` · mín. $${coupon.min_order}`}
+                      {coupon.max_uses && ` · ${coupon.uses}/${coupon.max_uses} usos`}
+                      {coupon.expires_at && ` · expira ${new Date(coupon.expires_at).toLocaleDateString('es-CO')}`}
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span style={{
+                    padding: '3px 10px', fontSize: '10px', fontWeight: '600',
+                    background: coupon.active ? 'rgba(46,213,115,0.1)' : 'rgba(231,76,60,0.1)',
+                    color: coupon.active ? '#2ed573' : '#e74c3c',
+                  }}>
+                    {coupon.active ? 'ACTIVO' : 'INACTIVO'}
+                  </span>
+                  <button
+                    onClick={async () => {
+                      await toggleCoupon(coupon.id, coupon.active ? 0 : 1);
+                      fetchAll();
+                    }}
+                    style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-secondary)', padding: '6px 12px', cursor: 'pointer', fontSize: '11px' }}
+                  >
+                    {coupon.active ? 'Desactivar' : 'Activar'}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!confirm('¿Eliminar cupón?')) return;
+                      await deleteCoupon(coupon.id);
+                      toast.success('Cupón eliminado');
+                      fetchAll();
+                    }}
+                    style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-muted)', padding: '6px 10px', cursor: 'pointer', transition: 'all 0.3s' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#e74c3c'; e.currentTarget.style.color = '#e74c3c'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {/* MODAL Producto */}
       {showModal && (
         <>
@@ -589,6 +662,60 @@ const AdminPage = () => {
           </div>
         </>
       )}
+    </div>
+  );
+};
+const CouponForm = ({ onCreated }) => {
+  const [form, setForm] = useState({ code: '', type: 'percentage', value: '', min_order: '', max_uses: '', expires_at: '' });
+
+  const inputStyle = {
+    width: '100%', padding: '10px 14px', background: 'var(--bg-primary)',
+    border: '1px solid var(--border)', color: 'var(--text-primary)', fontSize: '13px', outline: 'none',
+  };
+
+  const handleCreate = async () => {
+    if (!form.code || !form.value) return toast.error('Código y valor son obligatorios');
+    try {
+      await createCoupon(form);
+      toast.success('Cupón creado');
+      setForm({ code: '', type: 'percentage', value: '', min_order: '', max_uses: '', expires_at: '' });
+      onCreated();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Error al crear cupón');
+    }
+  };
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+      {[
+        { key: 'code', label: 'CÓDIGO', placeholder: 'PROMO20' },
+        { key: 'value', label: 'VALOR', placeholder: '10', type: 'number' },
+        { key: 'min_order', label: 'MÍNIMO ($)', placeholder: '0', type: 'number' },
+        { key: 'max_uses', label: 'USOS MÁX.', placeholder: 'Ilimitado', type: 'number' },
+      ].map(({ key, label, placeholder, type = 'text' }) => (
+        <div key={key}>
+          <label style={{ display: 'block', fontSize: '10px', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '6px' }}>{label}</label>
+          <input type={type} placeholder={placeholder} value={form[key]}
+            onChange={e => setForm({ ...form, [key]: key === 'code' ? e.target.value.toUpperCase() : e.target.value })}
+            style={inputStyle} />
+        </div>
+      ))}
+      <div>
+        <label style={{ display: 'block', fontSize: '10px', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '6px' }}>TIPO</label>
+        <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} style={{ ...inputStyle, cursor: 'pointer' }}>
+          <option value="percentage">Porcentaje (%)</option>
+          <option value="fixed">Fijo ($)</option>
+        </select>
+      </div>
+      <div>
+        <label style={{ display: 'block', fontSize: '10px', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '6px' }}>EXPIRACIÓN</label>
+        <input type="date" value={form.expires_at} onChange={e => setForm({ ...form, expires_at: e.target.value })} style={inputStyle} />
+      </div>
+      <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+        <button className="btn-gold" onClick={handleCreate} style={{ width: '100%', padding: '10px' }}>
+          <Plus size={14} style={{ marginRight: '6px' }} /> Crear
+        </button>
+      </div>
     </div>
   );
 };
