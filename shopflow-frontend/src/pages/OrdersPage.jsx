@@ -141,7 +141,7 @@ const OrdersPage = () => {
                       border: '1px solid rgba(30,144,255,0.2)',
                     }}>
                       <p style={{ fontSize: '10px', letterSpacing: '2px', color: '#1e90ff', marginBottom: '10px' }}>
-                        📦 INFORMACIÓN DE ENVÍO
+                        INFORMACIÓN DE ENVÍO
                       </p>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px' }}>
                         <div>

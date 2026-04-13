@@ -58,3 +58,6 @@ export const getCoupons = () => api.get('/coupons');
 export const createCoupon = (data) => api.post('/coupons', data);
 export const toggleCoupon = (id, active) => api.patch(`/coupons/${id}/toggle`, { active });
 export const deleteCoupon = (id) => api.delete(`/coupons/${id}`);
+
+// Analytics
+export const getAnalytics = (period = 30) => api.get(`/analytics/dashboard?period=${period}`);

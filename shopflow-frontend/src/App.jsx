@@ -11,6 +11,7 @@ import OrdersPage from './pages/OrdersPage';
 import AdminPage from './pages/AdminPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import PaymentPage from './pages/PaymentPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
         </Routes>
       </main>
       <Footer />

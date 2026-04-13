@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, User, LogOut, Menu, X, Shield } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import { ShoppingBag, User, LogOut, Menu, X, Shield, TrendingUp } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout, isAdmin } = useAuth();
@@ -59,13 +60,14 @@ const Navbar = () => {
             </Link>
           ))}
           {isAdmin() && (
-            <Link to="/admin" style={{
-              fontSize: '11px', letterSpacing: '2px',
-              textTransform: 'uppercase', color: 'var(--gold)',
-              display: 'flex', alignItems: 'center', gap: '6px'
-            }}>
-              <Shield size={12} /> Admin
-            </Link>
+            <>
+              <Link to="/admin" style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Shield size={12} /> Admin
+              </Link>
+              <Link to="/analytics" style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <TrendingUp size={12} /> Analytics
+              </Link>
+            </>
           )}
         </div>
 
