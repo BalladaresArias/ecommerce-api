@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getAnalytics } from '../services/api';
+import { getAnalytics, exportOrders } from '../services/api';
 import {
   Chart as ChartJS,
   CategoryScale, LinearScale, PointElement,
@@ -10,6 +10,7 @@ import {
 } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { TrendingUp, ShoppingBag, Users, RefreshCw } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement,
@@ -125,6 +126,20 @@ const AnalyticsPage = () => {
     }],
   };
 
+  const handleExport = async () => {
+    try {
+        const res = await exportOrders(period);
+        const url = window.URL.createObjectURL(new Blob([res.data]));
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ordenes-${period}dias.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    } catch (err) {
+        toast.error('Error al exportar');
+    }
+  };
+
   const statCard = (icon, label, value, sub, color = 'var(--gold)') => (
     <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', padding: '24px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
@@ -162,6 +177,18 @@ const AnalyticsPage = () => {
             ))}
           </div>
         </div>
+        {/* Exportar CSV/Excel */}
+        <button onClick={handleExport}
+            style={{
+                padding: '8px 20px', fontSize: '11px', letterSpacing: '1px',
+                border: '1px solid var(--gold)',
+                background: 'transparent',
+                color: 'var(--gold)',
+                cursor: 'pointer', transition: 'all 0.3s',
+                display: 'flex', alignItems: 'center', gap: '6px',
+            }}>
+            ↓ EXPORTAR CSV
+        </button>
 
         {/* Summary cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '40px' }}>

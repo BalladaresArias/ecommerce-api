@@ -61,3 +61,4 @@ export const deleteCoupon = (id) => api.delete(`/coupons/${id}`);
 
 // Analytics
 export const getAnalytics = (period = 30) => api.get(`/analytics/dashboard?period=${period}`);
+export const exportOrders = (period = 30) => api.get(`/analytics/export?period=${period}`, { responseType: 'blob' });
