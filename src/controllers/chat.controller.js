@@ -58,8 +58,10 @@ INSTRUCCIONES:
 
     const data = await response.json();
 
-    if (!response.ok)
-      return res.status(500).json({ error: 'Error de IA', detail: data });
+    if (!response.ok) {
+        console.error('Anthropic error:', JSON.stringify(data)); // ← agrega
+        return res.status(500).json({ error: 'Error de IA', detail: data });
+    }
 
     const text = data.content[0].text;
 
