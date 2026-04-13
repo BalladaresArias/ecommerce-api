@@ -13,6 +13,7 @@ const categoryRoutes = require('./routes/category.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const couponRoutes = require('./routes/coupon.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
+const invoiceRoutes = require('./routes/invoice.routes');
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/invoices', invoiceRoutes);
 
 // Ruta raíz
 app.get('/', (req, res) => {

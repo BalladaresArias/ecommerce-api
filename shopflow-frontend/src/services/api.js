@@ -65,3 +65,6 @@ export const exportOrders = (period = 30) => api.get(`/analytics/export?period=$
 
 // Importacion de productos desde CSV
 export const importProducts = (products) => api.post('/products/import', { products });
+
+// Invoices
+export const getInvoiceUrl = (orderId) => `${import.meta.env.VITE_API_URL}/invoices/${orderId}`;
