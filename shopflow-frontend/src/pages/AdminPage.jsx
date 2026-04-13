@@ -3,7 +3,7 @@ import { Plus, Trash2, Edit, Package, Tag, ShoppingBag, X, Check } from 'lucide-
 import {
   getProducts, createProduct, deleteProduct, updateProduct,
   getCategories, createCategory, deleteCategory,
-  getAllOrders, updateOrderStatus
+  getAllOrders, updateOrderStatus, importProducts
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -38,6 +38,7 @@ const AdminPage = () => {
   const [shippingForm, setShippingForm] = useState({
     shipping_company: '', shipping_tracking: '', shipping_estimated: '', shipping_notes: ''
   });
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     if (!user || !isAdmin()) {
@@ -193,6 +194,49 @@ const AdminPage = () => {
     { id: 'orders', label: 'Órdenes', icon: <ShoppingBag size={16} /> },
   ];
 
+  const downloadTemplate = () => {
+    const csv = [
+      'name,description,price,stock,category_id,image_url',
+      'Camiseta Negra,Camiseta 100% algodón,29900,10,1,https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400',
+      'Zapatos Deportivos,Zapatillas running,89900,5,2,https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400',
+    ].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'template-productos.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportCSV = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const lines = ev.target.result.split('\n').filter(Boolean);
+      const headers = lines[0].replace(/^\uFEFF/, '').split(',');
+      const products = lines.slice(1).map(line => {
+        const vals = line.split(',');
+        return headers.reduce((obj, h, i) => ({ ...obj, [h.trim()]: vals[i]?.trim() }), {});
+      }).filter(p => p.name && p.price);
+
+      if (products.length === 0) return toast.error('El CSV no tiene productos válidos');
+
+      setImporting(true);
+      try {
+        const res = await importProducts(products);
+        toast.success(res.data.message);
+        if (res.data.errors?.length) toast.error(`${res.data.errors.length} filas con error`);
+        fetchAll();
+      } catch (err) {
+        toast.error('Error al importar');
+      } finally {
+        setImporting(false);
+        e.target.value = '';
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  };
+
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <p style={{ color: 'var(--text-muted)', letterSpacing: '3px' }}>CARGANDO...</p>
@@ -264,6 +308,18 @@ const AdminPage = () => {
               {tab.icon} {tab.label.toUpperCase()}
             </button>
           ))}
+        </div>
+
+        {/* importar CSV */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
+          <button onClick={downloadTemplate}
+            style={{ padding: '10px 20px', fontSize: '11px', letterSpacing: '1px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+            ↓ DESCARGAR TEMPLATE CSV
+          </button>
+          <label style={{ padding: '10px 20px', fontSize: '11px', letterSpacing: '1px', border: '1px solid var(--gold)', color: 'var(--gold)', cursor: 'pointer', display: 'inline-block' }}>
+            {importing ? 'IMPORTANDO...' : '↑ IMPORTAR CSV'}
+            <input type="file" accept=".csv" onChange={handleImportCSV} style={{ display: 'none' }} />
+          </label>
         </div>
 
         {/* TAB: Productos */}

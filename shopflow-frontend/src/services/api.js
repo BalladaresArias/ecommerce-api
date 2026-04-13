@@ -62,3 +62,6 @@ export const deleteCoupon = (id) => api.delete(`/coupons/${id}`);
 // Analytics
 export const getAnalytics = (period = 30) => api.get(`/analytics/dashboard?period=${period}`);
 export const exportOrders = (period = 30) => api.get(`/analytics/export?period=${period}`, { responseType: 'blob' });
+
+// Importacion de productos desde CSV
+export const importProducts = (products) => api.post('/products/import', { products });

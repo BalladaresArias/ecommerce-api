@@ -9,5 +9,6 @@ router.get('/:id', productController.getOne);                                   
 router.post('/', verifyToken, verifyRole('admin'), productController.create);       // solo admin
 router.put('/:id', verifyToken, verifyRole('admin'), productController.update);     // solo admin
 router.delete('/:id', verifyToken, verifyRole('admin'), productController.remove);  // solo admin
+router.post('/import', verifyToken, verifyRole('admin'), productController.importCSV); // solo admin
 
 module.exports = router;

@@ -1,4 +1,5 @@
 const productModel = require('../models/product.model');
+const pool = require('../config/db');
 
 const getAll = async (req, res) => {
   try {
@@ -78,4 +79,30 @@ const remove = async (req, res) => {
   }
 };
 
-module.exports = { getAll, getOne, create, update, remove };
+const importCSV = async (req, res) => {
+  try {
+    const { products } = req.body;
+    if (!products || !Array.isArray(products) || products.length === 0)
+      return res.status(400).json({ error: 'No se enviaron productos' });
+
+    let created = 0, errors = [];
+
+    for (const p of products) {
+      if (!p.name || !p.price) {
+        errors.push(`Fila sin nombre o precio: ${JSON.stringify(p)}`);
+        continue;
+      }
+      await pool.query(
+        'INSERT INTO products (name, description, price, stock, category_id, image_url) VALUES (?, ?, ?, ?, ?, ?)',
+        [p.name, p.description || '', Number(p.price), Number(p.stock) || 0, p.category_id || null, p.image_url || '']
+      );
+      created++;
+    }
+
+    res.json({ message: `${created} productos importados`, errors });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al importar', detail: err.message });
+  }
+};
+
+module.exports = { getAll, getOne, create, update, remove, importCSV };
