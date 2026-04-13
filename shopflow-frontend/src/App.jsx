@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import CartDrawer from './components/layout/CartDrawer';
+import ChatBot from './components/layout/ChatBot'; 
 import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
 import LoginPage from './pages/LoginPage';
@@ -18,6 +19,7 @@ function App() {
     <>
       <Navbar />
       <CartDrawer />
+      <ChatBot /> 
       <main style={{ paddingTop: '70px' }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
