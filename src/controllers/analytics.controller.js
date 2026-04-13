@@ -117,4 +117,50 @@ const getDashboard = async (req, res) => {
   }
 };
 
-module.exports = { getDashboard };
+const exportOrders = async (req, res) => {
+  try {
+    const { period = '30' } = req.query;
+    const days = parseInt(period);
+
+    const [orders] = await pool.query(`
+      SELECT 
+        o.id,
+        u.name as cliente,
+        u.email,
+        o.total,
+        o.discount,
+        o.status,
+        o.coupon_id,
+        o.shipping_company,
+        o.shipping_tracking,
+        o.created_at
+      FROM orders o
+      JOIN users u ON o.user_id = u.id
+      WHERE o.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+      ORDER BY o.created_at DESC
+    `, [days]);
+
+    const headers = ['ID','Cliente','Email','Total','Descuento','Estado','Transportadora','Tracking','Fecha'];
+    const rows = orders.map(o => [
+      o.id,
+      o.cliente,
+      o.email,
+      o.total,
+      o.discount || 0,
+      o.status,
+      o.shipping_company || '',
+      o.shipping_tracking || '',
+      new Date(o.created_at).toLocaleDateString('es-CO'),
+    ]);
+
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="ordenes-${days}dias.csv"`);
+    res.send('\uFEFF' + csv); // BOM para que Excel abra bien tildes
+  } catch (err) {
+    res.status(500).json({ error: 'Error al exportar', detail: err.message });
+  }
+};
+
+module.exports = { getDashboard, exportOrders };

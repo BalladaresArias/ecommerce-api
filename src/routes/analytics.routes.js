@@ -5,5 +5,6 @@ const { verifyToken } = require('../middlewares/auth.middleware');
 const { verifyRole } = require('../middlewares/role.middleware');
 
 router.get('/dashboard', verifyToken, verifyRole('admin'), analyticsController.getDashboard);
+router.get('/export', verifyToken, verifyRole('admin'), analyticsController.exportOrders);
 
 module.exports = router;
