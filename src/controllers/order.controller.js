@@ -87,8 +87,19 @@ const getMyOrders = async (req, res) => {
 
 const getAllOrders = async (req, res) => {
   try {
-    const orders = await orderModel.getAllOrders();
-    res.json({ total: orders.length, orders });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const status = req.query.status || '';
+    const search = req.query.search || '';
+
+    const data = await orderModel.getAllOrders(page, limit, status, search);
+    res.json({
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
+      pages: Math.ceil(data.total / data.limit),
+      orders: data.orders,
+    });
   } catch (err) {
     console.error('ERROR getAllOrders:', err.message);
     res.status(500).json({ error: 'Error al obtener órdenes', detail: err.message });

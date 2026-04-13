@@ -33,13 +33,35 @@ const getOrdersByUser = async (user_id) => {
   return rows;
 };
 
-const getAllOrders = async () => {
+const getAllOrders = async (page = 1, limit = 20, status = '', search = '') => {
+  const offset = (page - 1) * limit;
+  let where = 'WHERE 1=1';
+  const params = [];
+
+  if (status) {
+    where += ' AND o.status = ?';
+    params.push(status);
+  }
+  if (search) {
+    where += ' AND (u.name LIKE ? OR u.email LIKE ? OR o.id LIKE ?)';
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
   const [rows] = await pool.query(
     `SELECT o.*, u.name AS customer_name, u.email
      FROM orders o
      JOIN users u ON o.user_id = u.id
-     ORDER BY o.created_at DESC`
+     ${where}
+     ORDER BY o.created_at DESC
+     LIMIT ? OFFSET ?`,
+    [...params, limit, offset]
   );
+
+  const [countRows] = await pool.query(
+    `SELECT COUNT(*) as total FROM orders o JOIN users u ON o.user_id = u.id ${where}`,
+    params
+  );
+
   for (let order of rows) {
     const [items] = await pool.query(
       `SELECT oi.*, p.name AS product_name
@@ -50,7 +72,8 @@ const getAllOrders = async () => {
     );
     order.items = items;
   }
-  return rows;
+
+  return { orders: rows, total: countRows[0].total, page, limit };
 };
 
 const updateStatus = async (id, status) => {

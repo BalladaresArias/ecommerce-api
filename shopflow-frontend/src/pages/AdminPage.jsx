@@ -40,6 +40,12 @@ const AdminPage = () => {
   });
   const [importing, setImporting] = useState(false);
 
+  const [orderPage, setOrderPage] = useState(1);
+  const [orderTotalPages, setOrderTotalPages] = useState(1);
+  const [orderTotal, setOrderTotal] = useState(0);
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatus, setOrderStatus] = useState('');
+
   useEffect(() => {
     if (!user || !isAdmin()) {
       navigate('/');
@@ -62,8 +68,10 @@ const AdminPage = () => {
 
       // Orders por separado para que no rompa todo
       try {
-        const ordRes = await getAllOrders();
+        const ordRes = await getAllOrders({ page: 1, limit: 20 });
         setOrders(ordRes.data.orders);
+        setOrderTotalPages(ordRes.data.pages || 1);
+        setOrderTotal(ordRes.data.total || 0);
       } catch (ordErr) {
         console.error('Error orders:', ordErr.message);
         setOrders([]);
@@ -77,6 +85,22 @@ const AdminPage = () => {
       setLoading(false);
     }
   };
+
+  const fetchOrders = async () => {
+    try {
+      const res = await getAllOrders({ page: orderPage, limit: 20, status: orderStatus, search: orderSearch });
+      setOrders(res.data.orders);
+      setOrderTotalPages(res.data.pages || 1);
+      setOrderTotal(res.data.total || 0);
+    } catch (err) {
+      console.error('Error orders:', err.message);
+      setOrders([]);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'orders') fetchOrders();
+  }, [orderPage, orderSearch, orderStatus, activeTab]);
 
   // Productos
   const handleOpenModal = (product = null) => {
@@ -501,6 +525,29 @@ const AdminPage = () => {
         {/* TAB: Órdenes */}
         {activeTab === 'orders' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Búsqueda y filtro */}
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <input
+                type="text"
+                placeholder="Buscar por cliente, email o # orden..."
+                value={orderSearch}
+                onChange={e => { setOrderSearch(e.target.value); setOrderPage(1); }}
+                style={{ flex: 1, minWidth: '220px', padding: '10px 14px', background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-primary)', fontSize: '13px', outline: 'none' }}
+              />
+              <select
+                value={orderStatus}
+                onChange={e => { setOrderStatus(e.target.value); setOrderPage(1); }}
+                style={{ padding: '10px 14px', background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-primary)', fontSize: '13px', outline: 'none', cursor: 'pointer' }}
+              >
+                <option value="">Todos los estados</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="pagado">Pagado</option>
+                <option value="enviado">Enviado</option>
+                <option value="entregado">Entregado</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{orderTotal} órdenes</span>
+            </div>
             {orders.length === 0 ? (
               <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '60px' }}>
                 No hay órdenes aún
@@ -579,6 +626,21 @@ const AdminPage = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+        {orderTotalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '24px' }}>
+            <button onClick={() => setOrderPage(p => Math.max(1, p - 1))} disabled={orderPage === 1}
+              style={{ padding: '8px 20px', fontSize: '11px', letterSpacing: '1px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', opacity: orderPage === 1 ? 0.4 : 1 }}>
+              ← Anterior
+            </button>
+            <span style={{ color: 'var(--text-muted)', fontSize: '12px', padding: '0 16px' }}>
+              Página {orderPage} de {orderTotalPages}
+            </span>
+            <button onClick={() => setOrderPage(p => Math.min(orderTotalPages, p + 1))} disabled={orderPage === orderTotalPages}
+              style={{ padding: '8px 20px', fontSize: '11px', letterSpacing: '1px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', opacity: orderPage === orderTotalPages ? 0.4 : 1 }}>
+              Siguiente →
+            </button>
           </div>
         )}
       </div>
