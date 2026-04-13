@@ -312,10 +312,10 @@ const AdminPage = () => {
 
         {/* importar CSV */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-          <button onClick={downloadTemplate}
+          {/*<button onClick={downloadTemplate}
             style={{ padding: '10px 20px', fontSize: '11px', letterSpacing: '1px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>
             ↓ DESCARGAR TEMPLATE CSV
-          </button>
+          </button>*/}
           <label style={{ padding: '10px 20px', fontSize: '11px', letterSpacing: '1px', border: '1px solid var(--gold)', color: 'var(--gold)', cursor: 'pointer', display: 'inline-block' }}>
             {importing ? 'IMPORTANDO...' : '↑ IMPORTAR CSV'}
             <input type="file" accept=".csv" onChange={handleImportCSV} style={{ display: 'none' }} />
