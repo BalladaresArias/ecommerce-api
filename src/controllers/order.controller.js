@@ -119,16 +119,13 @@ const updateStatus = async (req, res) => {
     if (!currentOrders.length)
       return res.status(404).json({ error: 'Orden no encontrada' });
 
-    const currentOrder = currentOrders[0];
+    const currentStatus = currentOrders[0].status;
 
     // Si se cancela viniendo de pagado/enviado → restaurar stock
-    if (status === 'cancelado' && ['pagado', 'enviado'].includes(currentOrder.status)) {
+    if (status === 'cancelado' && ['pagado', 'enviado', 'entregado'].includes(currentStatus)) {
       const [items] = await pool.query('SELECT * FROM order_items WHERE order_id = ?', [req.params.id]);
       for (const item of items) {
-        await pool.query(
-          'UPDATE products SET stock = stock + ? WHERE id = ?',
-          [item.quantity, item.product_id]
-        );
+        await pool.query('UPDATE products SET stock = stock + ? WHERE id = ?',[item.quantity, item.product_id]);
       }
     }
 
