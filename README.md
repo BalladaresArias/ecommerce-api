@@ -1,137 +1,125 @@
-# 🛒 ShopFlow — Ecommerce API + Frontend
+# 🛒 ShopFlow — Plataforma E-commerce
 
-Proyecto fullstack de ecommerce con backend REST en Node.js/Express y frontend en React + Vite.
+Plataforma de comercio electrónico fullstack lista para producción, construida con Node.js, React y MySQL.
 
----
+## ✨ Características
 
-## 📁 Estructura del proyecto
+- **Autenticación** con JWT y roles (admin / cliente)
+- **Catálogo** con paginación, búsqueda y filtros por categoría
+- **Carrito** y proceso de checkout completo
+- **Pagos** integrados con Wompi
+- **Cupones** de descuento (porcentaje o valor fijo)
+- **Gestión de órdenes** con estados y tracking de envío
+- **Facturación** en PDF por orden
+- **Analytics** con gráficas de ventas, productos y categorías
+- **Exportar** órdenes a CSV para contabilidad
+- **Chatbot IA** integrado para atención al cliente
+- **Importar productos** masivamente desde CSV
+- **Panel admin** completo con gestión de productos, categorías, órdenes y cupones
 
-```
-ecommerce-api/           ← Backend (Node.js + Express + MySQL)
-shopflow-frontend/       ← Frontend (React + Vite)
-```
+## 🏗️ Stack tecnológico
 
----
+| Capa | Tecnología |
+|------|-----------|
+| Backend | Node.js + Express 5 |
+| Base de datos | MySQL 2 |
+| Autenticación | JWT + bcryptjs |
+| Frontend | React 19 + Vite |
+| Estilos | Tailwind CSS + CSS custom |
+| Pagos | Wompi |
+| Email | Resend |
+| IA | Gemini API |
+| Deploy | Render |
 
-## 🚀 Backend — Ecommerce API
+## 🚀 Instalación local
 
-### Tecnologías
+### Requisitos
+- Node.js 18+
+- MySQL 8+
 
-- **Node.js** + **Express 5**
-- **MySQL 2** — base de datos relacional
-- **JWT** — autenticación con tokens
-- **bcryptjs** — hashing de contraseñas
-- **Swagger UI** — documentación interactiva
-- **Helmet + CORS + Morgan** — seguridad y logging
-- **Nodemailer** — envío de correos
-- **Nodemon** — recarga automática en desarrollo
-
-### Endpoints disponibles
-
-| Módulo       | Prefijo            |
-|--------------|--------------------|
-| Auth         | `/api/auth`        |
-| Productos    | `/api/products`    |
-| Categorías   | `/api/categories`  |
-| Órdenes      | `/api/orders`      |
-| Pagos        | `/api/payments`    |
-| Documentación| `/api/docs`        |
-
-### Variables de entorno
-
-Crea un archivo `.env` en la raíz del backend con las siguientes variables:
-
-```env
-PORT=3000
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=tu_usuario
-DB_PASSWORD=tu_contraseña
-DB_NAME=ecommerce_db
-JWT_SECRET=tu_secreto_jwt
-```
-
-### Instalación y uso
+### Backend
 
 ```bash
-# Instalar dependencias
+git clone https://github.com/BalladaresArias/ecommerce-api
+cd ecommerce-api
 npm install
-
-# Modo desarrollo (con recarga automática)
+cp .env.example .env
+# Edita .env con tus variables
 npm run dev
-
-# Modo producción
-npm start
 ```
 
-El servidor quedará disponible en `http://localhost:3000`  
-La documentación Swagger en `http://localhost:3000/api/docs`
+### Base de datos
 
----
-
-## 💻 Frontend — ShopFlow
-
-### Tecnologías
-
-- **React 19** + **Vite 8**
-- **React Router DOM 7** — navegación
-- **Axios** — peticiones HTTP
-- **Lucide React** — iconos
-- **React Hot Toast** — notificaciones
-- **Tailwind CSS** — estilos
-
-### Páginas
-
-- `/` — Home
-- `/products` — Catálogo de productos
-- `/products/:id` — Detalle de producto
-- `/login` / `/register` — Autenticación
-- `/checkout` — Proceso de compra
-- `/payment` — Pago
-- `/orders` — Mis órdenes
-- `/admin` — Panel de administración
-
-### Variables de entorno
-
-Crea un archivo `.env` en `shopflow-frontend/` con:
-
-```env
-VITE_API_URL=http://localhost:3000/api
+```bash
+# Crea la base de datos
+mysql -u root -p -e "CREATE DATABASE ecommerce_db;"
+# Importa el schema
+mysql -u root -p ecommerce_db < database/schema.sql
 ```
 
-### Instalación y uso
+### Frontend
 
 ```bash
 cd shopflow-frontend
-
-# Instalar dependencias
 npm install
-
-# Modo desarrollo
+cp .env.example .env
+# Edita VITE_API_URL=http://localhost:3000/api
 npm run dev
-
-# Build para producción
-npm run build
 ```
 
-El frontend estará disponible en `http://localhost:5173`
+## 🌐 URLs
 
----
+| Servicio | URL |
+|---------|-----|
+| Backend API | http://localhost:3000 |
+| Frontend | http://localhost:5173 |
+| Documentación Swagger | http://localhost:3000/api/docs |
 
-## ⚡ Inicio rápido (ambos servicios)
+## 📡 Endpoints principales
+
+| Módulo | Prefijo | Auth |
+|--------|---------|------|
+| Autenticación | `/api/auth` | Público |
+| Productos | `/api/products` | Público / Admin |
+| Categorías | `/api/categories` | Público / Admin |
+| Órdenes | `/api/orders` | Cliente / Admin |
+| Pagos | `/api/payments` | Cliente |
+| Cupones | `/api/coupons` | Admin |
+| Analytics | `/api/analytics` | Admin |
+| Facturas | `/api/invoices` | Cliente / Admin |
+| Chat IA | `/api/chat` | Público |
+
+## 🧪 Pruebas
 
 ```bash
-# Terminal 1 — Backend
-npm run dev
+# Pruebas unitarias y de integración
+npm test
 
-# Terminal 2 — Frontend
-cd shopflow-frontend && npm run dev
+# Con reporte de cobertura
+npm run test:coverage
+
+# Pruebas de carga
+k6 run tests/load/load.test.js
 ```
 
----
+### Resultados esperados
+- ✅ 44/44 pruebas de lógica
+- ✅ 22/22 pruebas de seguridad  
+- ✅ p(95) < 2s bajo 100 usuarios simultáneos
+- ✅ 0 vulnerabilidades npm
 
-## 📄 Documentación de la API
+## 🔐 Variables de entorno
 
-Una vez el servidor esté corriendo, accede a la documentación interactiva generada con Swagger:
+Ver `.env.example` para la lista completa de variables requeridas.
 
-👉 `http://localhost:3000/api/docs`
+## 📦 Deploy en Render
+
+1. Conecta tu repositorio de GitHub en Render
+2. Crea un Web Service apuntando a la raíz del proyecto
+3. Build command: `npm install`
+4. Start command: `node server.js`
+5. Agrega todas las variables de `.env.example` en Environment
+
+## 📄 Licencia
+
+MIT

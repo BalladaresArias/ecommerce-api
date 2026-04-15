@@ -17,20 +17,29 @@ const addOrderItem = async (order_id, product_id, quantity, unit_price) => {
 
 const getOrdersByUser = async (user_id) => {
   const [rows] = await pool.query(
-    'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC',
+    `SELECT 
+       o.*,
+       CONCAT('[', GROUP_CONCAT(
+         JSON_OBJECT(
+           'id', oi.id,
+           'product_id', oi.product_id,
+           'product_name', p.name,
+           'quantity', oi.quantity,
+           'unit_price', oi.unit_price
+         )
+       ), ']') AS items
+     FROM orders o
+     LEFT JOIN order_items oi ON oi.order_id = o.id
+     LEFT JOIN products p ON p.id = oi.product_id
+     WHERE o.user_id = ?
+     GROUP BY o.id
+     ORDER BY o.created_at DESC`,
     [user_id]
   );
-  for (let order of rows) {
-    const [items] = await pool.query(
-      `SELECT oi.*, p.name AS product_name
-       FROM order_items oi
-       JOIN products p ON oi.product_id = p.id
-       WHERE oi.order_id = ?`,
-      [order.id]
-    );
-    order.items = items;
-  }
-  return rows;
+  return rows.map(order => ({
+    ...order,
+    items: order.items ? JSON.parse(order.items) : [],
+  }));
 };
 
 const getAllOrders = async (page = 1, limit = 20, status = '', search = '') => {
@@ -38,42 +47,52 @@ const getAllOrders = async (page = 1, limit = 20, status = '', search = '') => {
   let where = 'WHERE 1=1';
   const params = [];
 
-  if (status) {
-    where += ' AND o.status = ?';
-    params.push(status);
-  }
+  if (status) { where += ' AND o.status = ?'; params.push(status); }
   if (search) {
     where += ' AND (u.name LIKE ? OR u.email LIKE ? OR o.id LIKE ?)';
     params.push(`%${search}%`, `%${search}%`, `%${search}%`);
   }
 
   const [rows] = await pool.query(
-    `SELECT o.*, u.name AS customer_name, u.email
+    `SELECT 
+       o.*, u.name AS customer_name, u.email,
+       CONCAT('[', GROUP_CONCAT(
+         JSON_OBJECT(
+           'id', oi.id,
+           'product_id', oi.product_id,
+           'product_name', p.name,
+           'quantity', oi.quantity,
+           'unit_price', oi.unit_price
+         )
+       ), ']') AS items
      FROM orders o
      JOIN users u ON o.user_id = u.id
+     LEFT JOIN order_items oi ON oi.order_id = o.id
+     LEFT JOIN products p ON p.id = oi.product_id
      ${where}
+     GROUP BY o.id
      ORDER BY o.created_at DESC
      LIMIT ? OFFSET ?`,
     [...params, limit, offset]
   );
 
   const [countRows] = await pool.query(
-    `SELECT COUNT(*) as total FROM orders o JOIN users u ON o.user_id = u.id ${where}`,
+    `SELECT COUNT(DISTINCT o.id) as total 
+     FROM orders o 
+     JOIN users u ON o.user_id = u.id 
+     ${where}`,
     params
   );
 
-  for (let order of rows) {
-    const [items] = await pool.query(
-      `SELECT oi.*, p.name AS product_name
-       FROM order_items oi
-       JOIN products p ON oi.product_id = p.id
-       WHERE oi.order_id = ?`,
-      [order.id]
-    );
-    order.items = items;
-  }
-
-  return { orders: rows, total: countRows[0].total, page, limit };
+  return {
+    orders: rows.map(order => ({
+      ...order,
+      items: order.items ? JSON.parse(order.items) : [],
+    })),
+    total: countRows[0].total,
+    page,
+    limit,
+  };
 };
 
 const updateStatus = async (id, status) => {

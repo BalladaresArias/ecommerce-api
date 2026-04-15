@@ -52,6 +52,8 @@ const createOrder = async (req, res) => {
 
     for (const item of enrichedItems) {
       await orderModel.addOrderItem(orderId, item.product_id, item.quantity, item.unit_price);
+      await pool.query('UPDATE products SET stock = stock - ? WHERE id = ?',[item.quantity, item.product_id]
+      );
     }
 
     const order = { id: orderId, total: final_total, original_total: total.toFixed(2), discount: discount.toFixed(2) };

@@ -36,10 +36,13 @@ const getOne = async (req, res) => {
 const create = async (req, res) => {
   try {
     const { name, description, price, stock, category_id, image_url } = req.body;
-    console.log('Crear producto:', { name, price, stock, category_id });
 
     if (!name || !price)
       return res.status(400).json({ error: 'Nombre y precio son obligatorios' });
+    if (Number(price) < 0)
+      return res.status(400).json({ error: 'El precio no puede ser negativo' });
+    if (stock !== undefined && Number(stock) < 0)
+      return res.status(400).json({ error: 'El stock no puede ser negativo' });
 
     const id = await productModel.create(name, description, price, stock, category_id, image_url);
     const product = await productModel.getById(id);
@@ -53,10 +56,15 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { name, description, price, stock, category_id, image_url } = req.body;
+
+    if (price !== undefined && Number(price) < 0)
+      return res.status(400).json({ error: 'El precio no puede ser negativo' });
+    if (stock !== undefined && Number(stock) < 0)
+      return res.status(400).json({ error: 'El stock no puede ser negativo' });
+
     const affected = await productModel.update(
       req.params.id, name, description, price, stock, category_id, image_url
     );
-
     if (!affected)
       return res.status(404).json({ error: 'Producto no encontrado' });
 
