@@ -2,7 +2,7 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
 
-const BASE_URL = 'https://ecommerce-api-rgsa.onrender.com/api';
+const BASE_URL = 'http://localhost:3000/api';
 
 const errorRate = new Rate('errors');
 const orderDuration = new Trend('order_duration');
