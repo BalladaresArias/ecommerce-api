@@ -7,7 +7,7 @@ const generateInvoice = async (req, res) => {
     const isAdmin = req.user.role === 'admin';
 
     const [orders] = await pool.query(
-      `SELECT o.*, u.name AS customer_name, u.email, u.phone
+      `SELECT o.*, u.name AS customer_name, u.email
        FROM orders o
        JOIN users u ON o.user_id = u.id
        WHERE o.id = ?`,
@@ -104,7 +104,7 @@ const generateInvoice = async (req, res) => {
     <div class="client-info">
       <p><strong>${order.customer_name}</strong></p>
       <p>${order.email}</p>
-      ${order.phone ? `<p>${order.phone}</p>` : ''}
+      
     </div>
   </div>
 
