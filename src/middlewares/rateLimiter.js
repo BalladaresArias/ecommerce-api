@@ -9,7 +9,7 @@ const globalLimiter = rateLimit({
 app.use('/api', globalLimiter);
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000, 
   max: 10, // solo 10 intentos de login cada 15 min
   message: { error: 'Demasiados intentos de login, intenta en 15 minutos' },
   standardHeaders: true,
