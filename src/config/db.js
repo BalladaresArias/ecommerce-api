@@ -8,11 +8,11 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME,
   port: process.env.DB_PORT || 3306,
   waitForConnections: true,
-  connectionLimit: 100,
+  connectionLimit: 100, // Ajustado a 100 para soportar la carga
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
-  connectTimeout: 30000,
+  //connectTimeout: 30000,
 });
 
 // Mantener conexión viva con ping cada 5 minutos

@@ -10,11 +10,10 @@ const orderDuration = new Trend('order_duration');
 // Configuración de etapas de carga
 export const options = {
   stages: [
-    { duration: '30s', target: 10  },  // Rampa: 0 → 10 usuarios en 30s
-    { duration: '1m',  target: 20  },  // Sube a 50 usuarios por 1 minuto
-    { duration: '30s', target: 50 },  // Sube a 100 usuarios
-    { duration: '1m',  target: 50 },  // Mantiene 100 usuarios por 1 minuto
-    { duration: '30s', target: 0   },  // Baja a 0
+    { duration: '30s', target: 10 }, // Rampa inicial suave
+    { duration: '1m',  target: 20 }, // Subida controlada
+    { duration: '1m',  target: 50 }, // Meseta de carga media
+    { duration: '30s', target: 0  }, // Descenso
   ],
   thresholds: {
     http_req_duration: ['p(95)<2000'], // 95% de requests < 2 segundos
