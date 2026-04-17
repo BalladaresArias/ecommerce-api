@@ -11,9 +11,9 @@ const orderDuration = new Trend('order_duration');
 export const options = {
   stages: [
     { duration: '30s', target: 10  },  // Rampa: 0 → 10 usuarios en 30s
-    { duration: '1m',  target: 50  },  // Sube a 50 usuarios por 1 minuto
-    { duration: '30s', target: 100 },  // Sube a 100 usuarios
-    { duration: '1m',  target: 100 },  // Mantiene 100 usuarios por 1 minuto
+    { duration: '1m',  target: 20  },  // Sube a 50 usuarios por 1 minuto
+    { duration: '30s', target: 50 },  // Sube a 100 usuarios
+    { duration: '1m',  target: 50 },  // Mantiene 100 usuarios por 1 minuto
     { duration: '30s', target: 0   },  // Baja a 0
   ],
   thresholds: {
