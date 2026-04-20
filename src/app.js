@@ -16,6 +16,9 @@ const analyticsRoutes = require('./routes/analytics.routes');
 const invoiceRoutes = require('./routes/invoice.routes');
 const chatRoutes = require('./routes/chat.routes');
 const { globalLimiter, authLimiter, ordersLimiter } = require('./middlewares/rateLimiter');
+const wishlistRoutes = require('./routes/wishlist.routes');
+const reviewRoutes   = require('./routes/review.routes');
+const pointsRoutes   = require('./routes/points.routes');
 
 const app = express();
 
@@ -46,6 +49,9 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/chat', chatRoutes);
 //app.use('/api/auth', authLimiter, authRoutes);
 //app.use('/api/orders', orderLimiter, orderRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/reviews',  reviewRoutes);
+app.use('/api/points',   pointsRoutes);
 
 // Ruta raíz
 app.get('/', (req, res) => {

@@ -4,6 +4,7 @@ const sendEmail = require('../config/mailer');
 const { orderConfirmationEmail, orderStatusEmail, newOrderAdminEmail } = require('../config/emailTemplates');
 const userModel = require('../models/user.model');
 const couponModel = require('../models/coupon.model');
+const pointsModel = require('../models/points.model'); // ← NUEVO
 const pool = require('../config/db');
 require('dotenv').config();
 
@@ -52,8 +53,7 @@ const createOrder = async (req, res) => {
 
     for (const item of enrichedItems) {
       await orderModel.addOrderItem(orderId, item.product_id, item.quantity, item.unit_price);
-      await pool.query('UPDATE products SET stock = stock - ? WHERE id = ?',[item.quantity, item.product_id]
-      );
+      await pool.query('UPDATE products SET stock = stock - ? WHERE id = ?', [item.quantity, item.product_id]);
     }
 
     const order = { id: orderId, total: final_total, original_total: total.toFixed(2), discount: discount.toFixed(2) };
@@ -116,19 +116,35 @@ const updateStatus = async (req, res) => {
     if (!validStatuses.includes(status))
       return res.status(400).json({ error: 'Estado inválido', valid: validStatuses });
 
-    // Obtener orden actual para saber de qué estado viene
     const [currentOrders] = await pool.query('SELECT * FROM orders WHERE id = ?', [req.params.id]);
     if (!currentOrders.length)
       return res.status(404).json({ error: 'Orden no encontrada' });
 
-    const currentStatus = currentOrders[0].status;
+    const currentOrder = currentOrders[0];
+    const currentStatus = currentOrder.status;
 
-    // Si se cancela viniendo de pagado/enviado → restaurar stock
+    // Cancelación → restaurar stock
     if (status === 'cancelado' && ['pagado', 'enviado', 'entregado'].includes(currentStatus)) {
       const [items] = await pool.query('SELECT * FROM order_items WHERE order_id = ?', [req.params.id]);
       for (const item of items) {
-        await pool.query('UPDATE products SET stock = stock + ? WHERE id = ?',[item.quantity, item.product_id]);
+        await pool.query('UPDATE products SET stock = stock + ? WHERE id = ?', [item.quantity, item.product_id]);
       }
+    }
+
+    // ← NUEVO: sumar puntos al marcar como entregado
+    if (status === 'entregado' && currentStatus !== 'entregado') {
+      setImmediate(async () => {
+        try {
+          const earned = await pointsModel.addPointsForOrder(
+            currentOrder.user_id,
+            currentOrder.id,
+            parseFloat(currentOrder.total)
+          );
+          if (earned > 0) console.log(`[puntos] Usuario ${currentOrder.user_id} ganó ${earned} puntos por orden #${currentOrder.id}`);
+        } catch (e) {
+          console.error('[puntos] Error al sumar puntos:', e.message);
+        }
+      });
     }
 
     if (status === 'enviado') {
@@ -136,7 +152,7 @@ const updateStatus = async (req, res) => {
         return res.status(400).json({ error: 'Transportadora y número de tracking son obligatorios para enviar' });
 
       await pool.query(
-        `UPDATE orders SET status = ?, shipping_company = ?, 
+        `UPDATE orders SET status = ?, shipping_company = ?,
          shipping_tracking = ?, shipping_estimated = ?, shipping_notes = ?
          WHERE id = ?`,
         [status, shipping_company, shipping_tracking, shipping_estimated || null, shipping_notes || null, req.params.id]

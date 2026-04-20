@@ -121,5 +121,11 @@ Ver `.env.example` para la lista completa de variables requeridas.
 5. Agrega todas las variables de `.env.example` en Environment
 
 ## 📄 Licencia
-
 MIT
+## PRUEBAS
+
+## Pruebas de carga (k6)
+- 50 usuarios simultáneos, 3.5 minutos
+- 10,052 checks — 100% exitosos
+- p(95) = 2.54ms
+- 0% errores

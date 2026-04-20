@@ -68,3 +68,21 @@ export const importProducts = (products) => api.post('/products/import', { produ
 
 // Invoices
 export const getInvoiceUrl = (orderId) => `${import.meta.env.VITE_API_URL}/invoices/${orderId}`;
+
+// ── WISHLIST ──────────────────────────────────────────────
+export const getWishlist = () => api.get('/wishlist');
+export const addToWishlist = (productId) => api.post(`/wishlist/${productId}`);
+export const removeFromWishlist = (productId) => api.delete(`/wishlist/${productId}`);
+export const checkWishlist = (productId) => api.get(`/wishlist/check/${productId}`);
+ 
+// ── RESEÑAS ───────────────────────────────────────────────
+export const getReviews = (productId, params = {}) => api.get(`/reviews/${productId}`, { params });
+export const createReview = (productId, data) => api.post(`/reviews/${productId}`, data);
+export const updateReview = (productId, data) => api.put(`/reviews/${productId}`, data);
+export const deleteReview = (productId) => api.delete(`/reviews/${productId}`);
+ 
+// ── PUNTOS ────────────────────────────────────────────────
+export const getMyPoints = () => api.get('/points');
+export const getPointsHistory = (params = {}) => api.get('/points/history', { params });
+export const redeemPoints = (points) => api.post('/points/redeem', { points });
+ 

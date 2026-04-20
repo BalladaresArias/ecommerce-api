@@ -13,6 +13,8 @@ import AdminPage from './pages/AdminPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import PaymentPage from './pages/PaymentPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import WishlistPage from './pages/WishlistPage';
+import PointsPage from './pages/PointsPage';
 
 function App() {
   return (
@@ -32,6 +34,8 @@ function App() {
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/wishlist" element={<WishlistPage />} />
+          <Route path="/points" element={<PointsPage />} />
         </Routes>
       </main>
       <Footer />

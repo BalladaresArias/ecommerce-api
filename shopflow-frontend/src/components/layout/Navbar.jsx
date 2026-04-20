@@ -66,6 +66,13 @@ const Navbar = () => {
               <Link to="/analytics" style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <TrendingUp size={12} /> Analytics
               </Link>
+
+              <Link to="/wishlist" style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <TrendingUp size={12} /> Wishlist
+              </Link>
+              <Link to="/points" style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <TrendingUp size={12} /> Points
+              </Link>
             </>
           )}
         </div>
