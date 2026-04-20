@@ -15,7 +15,7 @@ const couponRoutes = require('./routes/coupon.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const invoiceRoutes = require('./routes/invoice.routes');
 const chatRoutes = require('./routes/chat.routes');
-const { globalLimiter, authLimiter, orderLimiter } = require('./middlewares/rateLimiter');
+const { globalLimiter, authLimiter, ordersLimiter } = require('./middlewares/rateLimiter');
 
 const app = express();
 
@@ -31,17 +31,21 @@ const swaggerDocument = YAML.load('./swagger.yaml');
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Rutas
-app.use('/api/auth', authRoutes);
+//app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
+
 app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
+
+//app.use('/api/orders', orderRoutes);
+app.use('/api/orders', ordersLimiter, orderRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/chat', chatRoutes);
-app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/orders', orderLimiter, orderRoutes);
+//app.use('/api/auth', authLimiter, authRoutes);
+//app.use('/api/orders', orderLimiter, orderRoutes);
 
 // Ruta raíz
 app.get('/', (req, res) => {
