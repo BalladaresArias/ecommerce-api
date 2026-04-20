@@ -2,7 +2,7 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
 
-const BASE_URL = 'https://ecommerce-api-rgsa.onrender.com/api';
+const BASE_URL = 'http://localhost:3000/api';
 
 const errorRate = new Rate('errors');
 const orderDuration = new Trend('order_duration');
@@ -10,10 +10,11 @@ const orderDuration = new Trend('order_duration');
 // Configuración de etapas de carga
 export const options = {
   stages: [
-    { duration: '30s', target: 10 }, // Rampa inicial suave
-    { duration: '1m',  target: 20 }, // Subida controlada
-    { duration: '1m',  target: 50 }, // Meseta de carga media
-    { duration: '30s', target: 0  }, // Descenso
+    { duration: '30s', target: 10  },  // Rampa: 0 → 10 usuarios en 30s
+    { duration: '1m',  target: 20  },  // Sube a 50 usuarios por 1 minuto
+    { duration: '30s', target: 50 },  // Sube a 100 usuarios
+    { duration: '1m',  target: 50 },  // Mantiene 100 usuarios por 1 minuto
+    { duration: '30s', target: 0   },  // Baja a 0
   ],
   thresholds: {
     http_req_duration: ['p(95)<2000'], // 95% de requests < 2 segundos

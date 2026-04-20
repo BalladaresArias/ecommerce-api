@@ -1,12 +1,12 @@
 const rateLimit = require('express-rate-limit');
 
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'development' ? 999999 : 200, // Límite casi infinito en dev
-  message: 'Demasiadas peticiones, intente más tarde.'
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: process.env.NODE_ENV === 'production' ? 999999 : 200, 
+  message: { error: 'Demasiadas solicitudes, intenta en 15 minutos' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
-
-app.use('/api', globalLimiter);
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
