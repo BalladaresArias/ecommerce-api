@@ -1,11 +1,11 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingBag, ArrowLeft, Star, Shield, Truck, Package, Heart } from 'lucide-react';
 import { getProduct, getReviews, createReview, updateReview, deleteReview,
          addToWishlist, removeFromWishlist, checkWishlist } from '../services/api';
 import { useCart } from '../context/CartContext';
-import { AuthContext } from '../context/AuthContext';
-import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast'; 
 
 /* ── Estrellas ─────────────────────────────────────────── */
 const Stars = ({ value, onChange }) => (
@@ -23,7 +23,7 @@ const Stars = ({ value, onChange }) => (
 
 /* ── Sección de reseñas ────────────────────────────────── */
 const ReviewsSection = ({ productId }) => {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [avgRating, setAvgRating] = useState(0);
   const [total, setTotal] = useState(0);
