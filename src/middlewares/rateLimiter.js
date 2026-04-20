@@ -6,7 +6,6 @@ if (process.env.NODE_ENV !== 'production') {
     authLimiter: (req, res, next) => next(),
     ordersLimiter: (req, res, next) => next(),
   };
-  return; // o usa un return aquí si el archivo tiene más lógica abajo
 }
 
 const globalLimiter = rateLimit({
