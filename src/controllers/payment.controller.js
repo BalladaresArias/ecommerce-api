@@ -49,7 +49,9 @@ const createTransaction = async (req, res) => {
     );
     const acceptanceToken = merchantRes.data.data.presigned_acceptance.acceptance_token;
 
-    const amountInCents = Math.round(Number(order.total) * 4000 * 100);
+    //(DOLARES)
+    //const amountInCents = Math.round(Number(order.total) * 4000 * 100);
+    const amountInCents = Math.round(Number(order.total) * 100);
     const currency = 'COP';
     const reference = `shopflow-${order_id}-${Date.now()}`;
 

@@ -52,8 +52,11 @@ export default function (data) {
     'Authorization': `Bearer ${data.adminToken}`,
   };
 
-  // Escenario 1 — Navegar el catálogo (40% del tráfico)
-  if (Math.random() < 0.4) {
+  // ✅ Un solo Math.random() para todos los escenarios
+  const rand = Math.random();
+
+  if (rand < 0.40) {
+    // Escenario 1 — Catálogo (40%)
     const res = http.get(`${BASE_URL}/products?page=1&limit=12`, { headers });
     check(res, {
       'productos cargaron': r => r.status === 200,
@@ -61,26 +64,23 @@ export default function (data) {
     });
     errorRate.add(res.status !== 200);
     sleep(1);
-  }
 
-  // Escenario 2 — Ver un producto (30% del tráfico)
-  else if (Math.random() < 0.7) {
+  } else if (rand < 0.70) {
+    // Escenario 2 — Ver producto (30%)
     const res = http.get(`${BASE_URL}/products/1`, { headers });
     check(res, { 'producto encontrado': r => r.status === 200 || r.status === 404 });
     errorRate.add(res.status >= 500);
     sleep(0.5);
-  }
 
-  // Escenario 3 — Ver mis órdenes (20% del tráfico)
-  else if (Math.random() < 0.9) {
+  } else if (rand < 0.90) {
+    // Escenario 3 — Mis órdenes (20%)
     const res = http.get(`${BASE_URL}/orders/my-orders`, { headers });
     check(res, { 'órdenes cargaron': r => r.status === 200 });
     errorRate.add(res.status !== 200);
     sleep(1);
-  }
 
-  // Escenario 4 — Admin ve todas las órdenes (10% del tráfico)
-  else {
+  } else {
+    // Escenario 4 — Admin órdenes (10%)
     const start = Date.now();
     const res = http.get(`${BASE_URL}/orders?page=1&limit=20`, { headers: adminHeaders });
     orderDuration.add(Date.now() - start);

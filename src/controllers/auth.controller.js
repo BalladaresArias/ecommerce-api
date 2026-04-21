@@ -10,6 +10,9 @@ const register = async (req, res) => {
     if (!name || !email || !password)
       return res.status(400).json({ error: 'Nombre, email y contraseña son obligatorios' });
 
+    if (name.length > 255 || email.length > 255 || password.length > 500)
+      return res.status(400).json({ error: 'Campos demasiado largos' });
+
     const existingUser = await userModel.findByEmail(email);
     if (existingUser)
       return res.status(400).json({ error: 'El email ya está registrado' });

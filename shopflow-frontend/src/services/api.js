@@ -85,4 +85,6 @@ export const deleteReview = (productId) => api.delete(`/reviews/${productId}`);
 export const getMyPoints = () => api.get('/points');
 export const getPointsHistory = (params = {}) => api.get('/points/history', { params });
 export const redeemPoints = (points) => api.post('/points/redeem', { points });
+
+export default api;
  

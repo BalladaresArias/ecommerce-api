@@ -15,6 +15,7 @@ import PaymentPage from './pages/PaymentPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import WishlistPage from './pages/WishlistPage';
 import PointsPage from './pages/PointsPage';
+import AdminLoyaltyPage from './pages/AdminLoyaltyPage';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/points" element={<PointsPage />} />
+          <Route path="/admin/loyalty" element={<AdminLoyaltyPage />} />
         </Routes>
       </main>
       <Footer />
