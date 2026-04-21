@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, User, LogOut, Menu, X, Shield, TrendingUp } from 'lucide-react';
+import { ShoppingBag, User, LogOut, Menu, X, Shield, TrendingUp, Heart, Star } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 
@@ -45,7 +45,7 @@ const Navbar = () => {
         </Link>
 
         {/* Links centro */}
-        <div style={{ display: 'flex', gap: '36px' }} className="nav-links">
+        <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }} className="nav-links">
           {['/', '/products'].map((path, i) => (
             <Link key={path} to={path} style={{
               fontSize: '11px', letterSpacing: '2px',
@@ -58,20 +58,57 @@ const Navbar = () => {
               {i === 0 ? 'Inicio' : 'Productos'}
             </Link>
           ))}
+
+          {/* Links solo para clientes logueados */}
+          {user && !isAdmin() && (
+            <>
+              <Link to="/wishlist" style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase',
+                color: 'var(--text-secondary)', transition: 'color 0.3s',
+              }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--gold)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+              >
+                <Heart size={12} /> Favoritos
+              </Link>
+              <Link to="/points" style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase',
+                color: 'var(--text-secondary)', transition: 'color 0.3s',
+              }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--gold)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+              >
+                <Star size={12} /> Puntos
+              </Link>
+            </>
+          )}
+
+          {/* Links solo para admin */}
           {isAdmin() && (
             <>
-              <Link to="/admin" style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Link to="/admin" style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase',
+                color: 'var(--gold)',
+              }}>
                 <Shield size={12} /> Admin
               </Link>
-              <Link to="/analytics" style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Link to="/analytics" style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase',
+                color: 'var(--gold)',
+              }}>
                 <TrendingUp size={12} /> Analytics
               </Link>
-
-              <Link to="/wishlist" style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <TrendingUp size={12} /> Wishlist
-              </Link>
-              <Link to="/points" style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <TrendingUp size={12} /> Points
+              {/* Admin también puede ver el resumen de puntos y wishlist del sistema */}
+              <Link to="/admin/loyalty" style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase',
+                color: 'var(--gold)',
+              }}>
+                <Star size={12} /> Fidelización
               </Link>
             </>
           )}
@@ -79,6 +116,7 @@ const Navbar = () => {
 
         {/* Acciones derecha */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+
           {/* Carrito */}
           <button onClick={() => setIsOpen(true)} style={{
             background: 'none', border: 'none',
@@ -108,13 +146,14 @@ const Navbar = () => {
                 color: 'var(--text-secondary)',
               }}>
                 <User size={16} />
-                <span>{user.name.split(' ')[0]}</span>
+                {/* Fix: fallback si name es undefined */}
+                <span>{user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Usuario'}</span>
               </Link>
               <button onClick={handleLogout} style={{
                 background: 'none', border: '1px solid var(--border)',
                 color: 'var(--text-muted)', padding: '6px 12px',
                 fontSize: '10px', letterSpacing: '1px',
-                transition: 'all 0.3s',
+                transition: 'all 0.3s', cursor: 'pointer',
               }}
                 onMouseEnter={e => {
                   e.currentTarget.style.borderColor = 'var(--gold)';
