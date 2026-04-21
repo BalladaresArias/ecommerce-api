@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingBag, ArrowLeft, Star, Shield, Truck, Package, Heart } from 'lucide-react';
 import { getProduct, getReviews, createReview, updateReview, deleteReview,
@@ -214,7 +214,7 @@ const ProductDetailPage = () => {
   const [inWishlist, setInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const { addToCart, setIsOpen } = useCart();
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchProduct = async () => {
