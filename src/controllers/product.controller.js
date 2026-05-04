@@ -42,6 +42,9 @@ const create = async (req, res) => {
       finalImage = `/uploads/${req.file.filename}`;
     }
 
+    console.log(req.file);
+    console.log(req.body);
+
     if (!name || !price)
       return res.status(400).json({ error: 'Nombre y precio son obligatorios' });
     if (Number(price) < 0)
@@ -66,6 +69,9 @@ const update = async (req, res) => {
     if (req.file) {
       finalImage = `/uploads/${req.file.filename}`;
     }
+
+    console.log(req.file);
+    console.log(req.body);
 
     if (price !== undefined && Number(price) < 0)
       return res.status(400).json({ error: 'El precio no puede ser negativo' });

@@ -143,6 +143,7 @@ const AdminPage = () => {
         formData.append('image', productForm.image);
       }
 
+      console.log(productForm.image);
 
       if (editingProduct) {
         await updateProduct(editingProduct.id, formData);
