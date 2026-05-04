@@ -107,12 +107,12 @@ const AdminPage = () => {
     if (product) {
       setEditingProduct(product);
       setProductForm({
-        name: product.name,
-        description: product.description || '',
-        price: product.price,
-        stock: product.stock,
-        category_id: product.category_id || '',
-        image_url: product.image_url || '',
+        name: product?.name ?? '',
+        description: product?.description ?? '',
+        price: product?.price ?? '',
+        stock: product?.stock ?? '',
+        category_id: product?.category_id ?? '',
+        image_url: product?.image_url ?? '',
         image: null
       });
     } else {
@@ -123,8 +123,9 @@ const AdminPage = () => {
   };
 
   const handleSaveProduct = async () => {
-    if (!productForm.name || !productForm.price)
+    if (!productForm.name || !productForm.price){
       return toast.error('Nombre y precio son obligatorios');
+    }
 
     try {
       const formData = new FormData();
@@ -143,13 +144,11 @@ const AdminPage = () => {
         formData.append('image', productForm.image);
       }
 
-      console.log(productForm.image);
-
       if (editingProduct) {
         await updateProduct(editingProduct.id, formData);
         toast.success('Producto actualizado');
       } else {
-        await createProduct(productForm);
+        await createProduct(formData);
         toast.success('Producto creado');
       }
       setShowModal(false);
@@ -401,7 +400,7 @@ const AdminPage = () => {
                       <td style={{ padding: '14px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           {product.image_url && (
-                            <img src={product.image_url?.startsWith('/uploads')? `http://localhost:3000${product.image_url}`: product.image_url} alt={product.name}
+                            <img src={product.image_url?.startsWith('/uploads')? `http://localhost:3000${product.image_url}`: product.image_url}alt={product.name}
                               style={{ width: '36px', height: '36px', objectFit: 'cover', border: '1px solid var(--border)' }} />
                           )}
                           <span style={{ fontSize: '13px' }}>{product.name}</span>
@@ -768,16 +767,14 @@ const AdminPage = () => {
                 { key: 'price', label: 'Precio', type: 'number', placeholder: '0.00' },
                 { key: 'stock', label: 'Stock', type: 'number', placeholder: '0' },
                 { key: 'image_url', label: 'URL de imagen', type: 'text', placeholder: 'https://...' },
-                { key: 'image', label: 'Subir Imagen', type: 'file'},
+                { key: 'image', label: 'Subir Imagen', type: 'file' },
               ].map(({ key, label, type, placeholder }) => (
                 <div key={key}>
                   <label style={{ display: 'block', fontSize: '10px', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '6px' }}>
                     {label.toUpperCase()}
                   </label>
-                  <input
-                    type={type} placeholder={placeholder}
-                    {...(type !== 'file' ? { value: productForm[key] || '' } : {})}
-                    onChange={e =>setProductForm({...productForm,[key]:type === 'file'? e.target.files[0]: e.target.value})}
+                  <input type={type} placeholder={placeholder} {...(type !== 'file' ? { value: productForm[key] ?? '' } : {})}
+                    onChange={e => setProductForm({ ...productForm,[key] : type === 'file' ? e.target.files[0]: e.target.value})}
                     style={inputStyle}
                     onFocus={e => e.target.style.borderColor = 'var(--border-gold)'}
                     onBlur={e => e.target.style.borderColor = 'var(--border)'}
@@ -877,8 +874,8 @@ const CouponForm = ({ onCreated }) => {
       ].map(({ key, label, placeholder, type = 'text' }) => (
         <div key={key}>
           <label style={{ display: 'block', fontSize: '10px', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: '6px' }}>{label}</label>
-          <input type={type} placeholder={placeholder} value={form[key]}
-            onChange={e => setForm({ ...form, [key]: key === 'code' ? e.target.value.toUpperCase() : e.target.value })}
+          <input type={type} placeholder={placeholder} {...(type !== 'file' ? { value: productForm[key] ?? '' } : {})}
+            onChange={e => setProductForm({ ...productForm,[key] : type === 'file' ? e.target.files[0]: e.target.value})}
             style={inputStyle} />
         </div>
       ))}

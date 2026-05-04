@@ -1,9 +1,16 @@
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+
+const uploadPath = path.join(__dirname, '../../uploads');
+
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath, { recursive: true });
+}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, uploadPath);
   },
 
   filename: (req, file, cb) => {
@@ -20,20 +27,18 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
   const allowed = /jpg|jpeg|png|webp/;
 
-  const isValid = allowed.test(
+  const valid = allowed.test(
     path.extname(file.originalname).toLowerCase()
   );
 
-  if (isValid) {
+  if (valid) {
     cb(null, true);
   } else {
     cb(new Error('Formato no permitido'));
   }
 };
 
-const upload = multer({
+module.exports = multer({
   storage,
   fileFilter,
 });
-
-module.exports = upload;

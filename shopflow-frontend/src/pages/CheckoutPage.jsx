@@ -95,7 +95,7 @@ const CheckoutPage = () => {
                 }}>
                   <div style={{ width: '80px', height: '80px', background: 'var(--bg-primary)', border: '1px solid var(--border)', overflow: 'hidden', flexShrink: 0 }}>
                     {item.image_url
-                      ? <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ? <img src={item.image_url?.startsWith('/uploads')? `http://localhost:3000${item.image_url}`: item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: '24px', color: 'var(--text-muted)' }}>✦</div>
                     }
                   </div>

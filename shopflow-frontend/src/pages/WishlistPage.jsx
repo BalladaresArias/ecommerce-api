@@ -106,7 +106,7 @@ const WishlistPage = () => {
                 <div style={{ aspectRatio: '1', overflow: 'hidden', cursor: 'pointer', position: 'relative' }}
                   onClick={() => navigate(`/products/${item.product_id}`)}>
                   {item.image_url ? (
-                    <img src={item.image_url} alt={item.name}
+                    <img src={item.image_url?.startsWith('/uploads')? `http://localhost:3000${item.image_url}`: item.image_url} alt={item.name}
                       style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s' }}
                       onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
                       onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}

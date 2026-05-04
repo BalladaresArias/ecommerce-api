@@ -99,7 +99,7 @@ const CartDrawer = () => {
                   flexShrink: 0, overflow: 'hidden',
                 }}>
                   {item.image_url ? (
-                    <img src={item.image_url} alt={item.name}
+                    <img src={item.image_url?.startsWith('/uploads')? `http://localhost:3000${item.image_url}`: item.image_url} alt={item.name}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <div style={{

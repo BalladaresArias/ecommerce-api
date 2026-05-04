@@ -265,7 +265,7 @@ const HomePage = () => {
                     overflow: 'hidden', position: 'relative',
                   }}>
                     {product.image_url ? (
-                      <img src={product.image_url} alt={product.name}
+                      <img src={ product.image_url?.startsWith('/uploads') ? `http://localhost:3000${product.image_url}` : product.image_url} alt={product.name}
                         style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s' }}
                         onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
                         onMouseLeave={e => e.target.style.transform = 'scale(1)'}

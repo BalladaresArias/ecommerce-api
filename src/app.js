@@ -24,8 +24,18 @@ const path = require('path');
 const app = express();
 
 // Middlewares globales
-app.use(helmet());
-app.use(cors());
+//app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: {
+      policy: "cross-origin"
+    }
+  })
+);
+//app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173'
+}));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(globalLimiter);
