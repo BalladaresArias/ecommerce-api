@@ -36,6 +36,11 @@ const getOne = async (req, res) => {
 const create = async (req, res) => {
   try {
     const { name, description, price, stock, category_id, image_url } = req.body;
+    let finalImage = image_url;
+
+    if (req.file) {
+      finalImage = `/uploads/${req.file.filename}`;
+    }
 
     if (!name || !price)
       return res.status(400).json({ error: 'Nombre y precio son obligatorios' });
@@ -44,7 +49,7 @@ const create = async (req, res) => {
     if (stock !== undefined && Number(stock) < 0)
       return res.status(400).json({ error: 'El stock no puede ser negativo' });
 
-    const id = await productModel.create(name, description, price, stock, category_id, image_url);
+    const id = await productModel.create(name, description, price, stock, category_id, finalImage);
     const product = await productModel.getById(id);
     res.status(201).json({ message: 'Producto creado exitosamente', product });
   } catch (err) {
@@ -56,6 +61,11 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { name, description, price, stock, category_id, image_url } = req.body;
+    let finalImage = image_url;
+
+    if (req.file) {
+      finalImage = `/uploads/${req.file.filename}`;
+    }
 
     if (price !== undefined && Number(price) < 0)
       return res.status(400).json({ error: 'El precio no puede ser negativo' });
@@ -63,7 +73,7 @@ const update = async (req, res) => {
       return res.status(400).json({ error: 'El stock no puede ser negativo' });
 
     const affected = await productModel.update(
-      req.params.id, name, description, price, stock, category_id, image_url
+      req.params.id, name, description, price, stock, category_id, image_url, finalImage
     );
     if (!affected)
       return res.status(404).json({ error: 'Producto no encontrado' });

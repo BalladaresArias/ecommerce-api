@@ -19,6 +19,7 @@ const { globalLimiter, authLimiter, ordersLimiter } = require('./middlewares/rat
 const wishlistRoutes = require('./routes/wishlist.routes');
 const reviewRoutes   = require('./routes/review.routes');
 const pointsRoutes   = require('./routes/points.routes');
+const path = require('path');
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/reviews',  reviewRoutes);
 app.use('/api/points',   pointsRoutes);
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Ruta raíz
 app.get('/', (req, res) => {
